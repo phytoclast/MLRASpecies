@@ -14,9 +14,9 @@ library(proxy)
 mlramatrix <- readRDS('data/mlramatrix.RDS')
 #mlramatrix <- readRDS('data/usfsmatrix.RDS')
 #MLRASpecies <- readRDS('data/MLRASpecies.RDS')
-#MLRASpecies <- readRDS('data/USFSSpecies.RDS')
+#MLRASpecies <- readRDS('data/usfsmatrix.RDS')
 fakeplots <- read.delim("data/fakeplots.txt")
-fipsplots <- read.delim("data/FIPSSpecies.txt")
+#fipsplots <- read.delim("data/FIPSSpecies.txt")
 
 #Matrix
 #MLRASpecies$MLRA <-  as.character(paste0('M',MLRASpecies$MLRARSYM))
@@ -41,6 +41,8 @@ disbraysqrt <- as.data.frame(as.matrix(vegdist(mlramatrix^(1/3),method='bray', b
 disjac2 <- as.data.frame(as.matrix(mlrajacdist2))
 dissoren <- as.data.frame(as.matrix(mlrasorendist))
 simsim <- as.data.frame(as.matrix(mlrasimpsim))
+chaodist <- as.data.frame(as.matrix(vegdist(mlramatrix,method='chao', binary=FALSE, na.rm=T)))
+#tree build
 jactree <- agnes(disjac, method='average')
 jacsqrttree <- agnes(disjacsqrt, method='average')
 jactree2 <- agnes(disjac2, method='average')
@@ -50,6 +52,7 @@ sorentree <- agnes(dissoren, method='average')
 dianabraytree <- diana(disbray)
 dianajactree <- diana(disjac)
 simtree <- agnes(simsim, method='average')
+chaotree <- agnes(chaodist, method='average')
 w <- 500
 h <- 2000
 u <- 12
@@ -84,6 +87,9 @@ dev.off()
 
 png(filename="output/simsim.png",width = w, height = h, units = "px", pointsize = u)
 plot(as.phylo(as.hclust(simtree)), main='MLRA floristic simularity - simpson',label.offset=0.05, direction='right', font=1, cex=0.85)
+dev.off()
+png(filename="output/chaotree.png",width = w, height = h, units = "px", pointsize = u)
+plot(as.phylo(as.hclust(chaotree)), main='MLRA floristic simularity - chao',label.offset=0.05, direction='right', font=1, cex=0.85)
 dev.off()
 
 
