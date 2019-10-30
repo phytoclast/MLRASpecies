@@ -158,6 +158,17 @@ dev.off()
 #subsections
 
 #mlramatrix <- readRDS('data/usfssubsecmatrix.RDS')
+dcamodel <- decorana(mlramatrix)
+sites <- dcamodel$rproj
+species <- dcamodel$cproj
+dcatree <- agnes(sites)
+w <- 500
+h <- 10000
+u <- 10
+png(filename="output/dcatree.png",width = w, height = h, units = "px", pointsize = u)
+plot(as.phylo(as.hclust(dcatree)), main='USFS subsection floristic simularity - DECORANA',label.offset=0.05, direction='right', font=1, cex=0.85)
+dev.off()
+
 #saveRDS(mlrasimpsim, "data/mlrasimpsim.RDS")
 #mlrasimpsim <- readRDS("data/mlrasimpsim.RDS")
 #subsecjacdist <- readRDS("data/subsecjacdist.RDS")
