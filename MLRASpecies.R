@@ -10,17 +10,18 @@ library(proxy)
 ######################################----
 MLRASpecies <- read.delim("data/USFSSubFamily.txt")
 MLRASpecies <- read.delim("data/USFSSubHabitT.txt")
+
 #MLRASpecies <- read.delim("data/EPA3Species.txt")
 #MLRASpecies <- read.delim("data/EPASpecies.txt")
 #MLRASpecies <- read.delim("data/MLRASpecies.txt")
 #MLRASpecies <- read.delim("data/USFSSpecies.txt")
 #MLRASpecies <- read.delim("data/USFSTrees.txt")
-#MLRASpecies <- read.delim("data/USFSSubSpecies.txt")
+#ssecSpecies <- read.delim("data/USFSSubSpecies.txt")
 #MLRASpecies <- read.delim("data/WardSpecies.txt")
 #mlramatrix <- readRDS('data/mlramatrix.RDS')
 #mlramatrix <- readRDS('data/usfsmatrix.RDS')
 #fipsmatrix <- readRDS("data/fipsmatrix.RDS")
-#MLRASpecies <- readRDS('data/USFSSubSpecies.RDS')
+#ssecSpecies <- readRDS('data/USFSSubSpecies.RDS')
 #MLRASpecies <- readRDS('data/WardSpecies.RDS')
 #mlramatrix <- readRDS('data/usfsmatrix.RDS')
 #mlramatrix <- readRDS('data/wardmatrix.RDS')
@@ -156,44 +157,46 @@ dev.off()
 
 
 #subsections
+Species_km <- read.delim("data/Species_km.txt")
+ssectmatrix <- readRDS('data/usfssubsecmatrix.RDS')
+x1 <- which(Species_km$SumOfkm2 >= 1000000)
+x2 <- which(Species_km$SumOfkm2 >= 200000 & Species_km$SumOfkm2 < 1000000)
+x3 <- which(Species_km$SumOfkm2 < 200000)
+jacdis1 <- as.data.frame(as.matrix(vegdist(ssectmatrix[,x1], method = 'jaccard')))
+jacdis2 <- as.data.frame(as.matrix(vegdist(ssectmatrix[,x2], method = 'jaccard')))
+jacdis3 <- as.data.frame(as.matrix(vegdist(ssectmatrix[,x3], method = 'jaccard')))
+jactree1 <- agnes(jacdis1, method = 'average')
+jactree2 <- agnes(jacdis2, method = 'average')
+jactree3 <- agnes(jacdis3, method = 'average')
+length(x1)
+length(x2)
+length(x3)
+x <- as.data.frame(colnames(ssectmatrix[,x1]))
 
-#mlramatrix <- readRDS('data/usfssubsecmatrix.RDS')
-dcamodel <- decorana(mlramatrix)
+dcamodel <- decorana(ssectmatrix)
 sites <- dcamodel$rproj
 species <- dcamodel$cproj
-dcatree <- agnes(sites)
-w <- 500
-h <- 10000
-u <- 10
-png(filename="output/dcatree.png",width = w, height = h, units = "px", pointsize = u)
-plot(as.phylo(as.hclust(dcatree)), main='USFS subsection floristic simularity - DECORANA',label.offset=0.05, direction='right', font=1, cex=0.85)
-dev.off()
+dcadis1 <- as.data.frame(as.matrix(vegdist(sites[,1], method = 'euclidean')))
+dcadis2 <- as.data.frame(as.matrix(vegdist(sites[,1:2], method = 'euclidean')))
+dcadis3 <- as.data.frame(as.matrix(vegdist(sites[,1:3], method = 'euclidean')))
+dcadis4 <- as.data.frame(as.matrix(vegdist(sites[,1:4], method = 'euclidean')))
+dcadis <- (dcadis1*1 +dcadis2*1 +dcadis3*1 +dcadis4*1)/4
+dcatree <- agnes(dcadis, method = 'average')
 
-#saveRDS(mlrasimpsim, "data/mlrasimpsim.RDS")
-#mlrasimpsim <- readRDS("data/mlrasimpsim.RDS")
-#subsecjacdist <- readRDS("data/subsecjacdist.RDS")
-jacdist2 <- jacdistfam + jacdisthab + subsecjacdist
-jacdist <- as.data.frame(as.matrix(vegdist(mlramatrix,method='jaccard', binary=FALSE, na.rm=T)))
 
-jactree <- agnes(jacdist2, method='average')
-#dianatree <- diana(MLRASpecies)
-#simtree <- agnes(simsim, method='average')
-#wardsimtree <- agnes(simsim, method='ward')
-#kmeangroups <- kmeans(fipsjacdistdf, centers = 256)
-#kclust <- as.data.frame( kmeangroups$cluster)
-#colnames(kclust) <- 'clust'
-#kclust$link <- rownames(kclust)
-#write.dbf(kclust, 'output/kclust.dbf')
-#saveRDS(jactree, 'data/fipsjactree.RDS')
-treeofinterest <- jactree
-cutsjac2 <- cutree(treeofinterest, k=32)
-cutsjac4 <- cutree(treeofinterest, k=64)
-cutsjac8 <- cutree(treeofinterest, k=128)
-cutsjac16 <- cutree(treeofinterest, k=256)
+treeofinterest <- jactree2
+cutsjac2 <- cutree(treeofinterest, k=2)
+cutsjac4 <- cutree(treeofinterest, k=4)
+cutsjac8 <- cutree(treeofinterest, k=8)
+cutsjac16 <- cutree(treeofinterest, k=16)
 cutsjac <- cutsjac2*10000+cutsjac4*1000+cutsjac8*100+cutsjac16
 jactreelist <- cbind(as.data.frame(cutsjac2),as.data.frame(cutsjac4),as.data.frame(cutsjac8),as.data.frame(cutsjac16),as.data.frame(cutsjac), row.names(treeofinterest$data))
 colnames(jactreelist) <- c('groups2', 'groups4','groups8','groups16','group','link')
 write.dbf(jactreelist, 'output/subsectreelist.dbf')
+
+sitesdf <- as.data.frame(sites)
+sitesdf$link <- rownames(sitesdf)
+write.dbf(sitesdf, 'output/dca.dbf')
 w <- 500
 h <- 10000
 u <- 10
@@ -201,6 +204,14 @@ png(filename="output/subsecjac.png",width = w, height = h, units = "px", pointsi
 plot(as.phylo(as.hclust(jactree)), main='USFS subsection floristic simularity - jaccard metric',label.offset=0.05, direction='right', font=1, cex=0.85)
 dev.off()
 
+secdiversity <- cbind(rownames(ssectmatrix),(apply(ssectmatrix, MARGIN=1, FUN='sum')/100))
+colnames(secdiversity) <- c('link', 'spp')
+secdiversity <- aggregate(ssecSpecies[,c('abundance')], by=list(ssecSpecies$SUBSECTION), FUN='sum')
+colnames(secdiversity) <- c('link', 'spp')
+secdiversity$spp <- secdiversity$spp/100
+secdiversity$link <- as.character(secdiversity$link)
+secdiversity[substr(secdiversity$link,1,1) != 'M',]$link <- paste0('X',secdiversity[substr(secdiversity$link,1,1) != 'M',]$link)
+write.dbf(secdiversity, 'output/secdiversity.dbf')
 
 #wardclusters
 mlramatrix <- readRDS('data/wardmatrix.RDS')
