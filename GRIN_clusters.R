@@ -8,6 +8,7 @@ library(dynamicTreeCut)
 library(rpart)
 library(rpart.plot)
 library(goeveg)
+library(proxy)
 #import
 plotdata <- read.delim("data/GRIN/altgeogrin.txt")
 rownames(plotdata) <- plotdata[,1]
@@ -40,10 +41,29 @@ if (F){
   jacdist <- as.data.frame(as.matrix(vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
   jactree <- agnes(jacdist, method='ward')
 }
-if (T){
+if (F){
   amethod <- 'jaccard-agnes' 
   jacdist <- as.data.frame(as.matrix(vegdist(plotdata, method='jaccard', binary=FALSE, na.rm=T)))
   jactree <- agnes(jacdist, method='average')
+}
+if (T){
+  amethod <- 'simpson-agnes' 
+  jacdist <- as.data.frame(as.matrix(simil(plotdata,method='Simpson')))
+  jactree <- agnes(jacdist, method='average')
+}
+if (F){
+  amethod <- 'simpson-diana' 
+  jacdist <- as.data.frame(as.matrix(simil(plotdata,method='Simpson')))
+  jactree <- diana(jacdist)
+}
+if (F){
+  amethod <- 'simpson-ward' 
+  jacdist <- as.data.frame(as.matrix(simil(plotdata,method='Simpson')))
+  jactree <- agnes(jacdist, method='ward')
+}
+if (F){
+  amethod <- 'euclid-ward' 
+  jactree <- agnes(plotdata, method='ward')
 }
 filename <- paste0('output/GRIN_',amethod,'.png')
 
