@@ -9,6 +9,7 @@ library(rpart)
 library(rpart.plot)
 library(goeveg)
 library(proxy)
+library(goeveg)
 #import
 preplotdata <- read.delim("data/GRIN/altgeogrin.txt")
 rownames(preplotdata) <- preplotdata[,1]
@@ -25,11 +26,11 @@ preplotdata <- preplotdata[,!(names(preplotdata) %in% excluded)]
 plotdata <- t(preplotdata)
 
 
-makeplot <- function(amethod,jacdist,jactree){
+makeplot <- function(amethod,jacdist,jactree,k){
   filename <- paste0('output/GRIN_',amethod,'.png')
   
   #make cuts and reformat dendrogram
-  ngroups=8
+  ngroups=k
   groups <- cutree(jactree, k = ngroups)
   
   soilplot <- names(groups)
@@ -72,63 +73,73 @@ makeplot <- function(amethod,jacdist,jactree){
 #analysis method
 amethod <- 'bray-agnes' 
 if (T){
-  amethod <- 'bray-agnes' 
+  amethod <- 'bray-agnes'
+  k=15
   jacdist <- as.data.frame(as.matrix(vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
   jactree <- agnes(jacdist, method='average')
-  makeplot(amethod,jacdist,jactree)
+  makeplot(amethod,jacdist,jactree,k)
 }
 if (T){
-  amethod <- 'bray-single' 
+  amethod <- 'bray-single'
+  k=15
   jacdist <- as.data.frame(as.matrix(vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
   jactree <- agnes(jacdist, method='single')
-  makeplot(amethod,jacdist,jactree)
+  makeplot(amethod,jacdist,jactree,k)
 }
 if (T){
   amethod <- 'bray-complete' 
+  k=7
   jacdist <- as.data.frame(as.matrix(vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
   jactree <- agnes(jacdist, method='complete')
-  makeplot(amethod,jacdist,jactree)
+  makeplot(amethod,jacdist,jactree,k)
 }
 if (T){
   amethod <- 'bray-diana' 
+  k=10
   jacdist <- as.data.frame(as.matrix(vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
   jactree <- diana(jacdist)
-  makeplot(amethod,jacdist,jactree)
+  makeplot(amethod,jacdist,jactree,k)
 }
 if (T){
   amethod <- 'bray-ward' 
+  k=9
   jacdist <- as.data.frame(as.matrix(vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
   jactree <- agnes(jacdist, method='ward')
-  makeplot(amethod,jacdist,jactree)
+  makeplot(amethod,jacdist,jactree,k)
 }
 if (T){
-  amethod <- 'jaccard-agnes' 
+  amethod <- 'jaccard-agnes'
+  k=15
   jacdist <- as.data.frame(as.matrix(vegdist(plotdata, method='jaccard', binary=FALSE, na.rm=T)))
   jactree <- agnes(jacdist, method='average')
-  makeplot(amethod,jacdist,jactree)
+  makeplot(amethod,jacdist,jactree,k)
 }
 if (T){
-  amethod <- 'simpson-agnes' 
+  amethod <- 'simpson-agnes'
+  k=4
   jacdist <- as.data.frame(as.matrix(simil(plotdata,method='Simpson')))
   jactree <- agnes(jacdist, method='average')
-  makeplot(amethod,jacdist,jactree)
+  makeplot(amethod,jacdist,jactree,k)
 }
 if (T){
-  amethod <- 'simpson-diana' 
+  amethod <- 'simpson-diana'
+  k=4
   jacdist <- as.data.frame(as.matrix(simil(plotdata,method='Simpson')))
   jactree <- diana(jacdist)
-  makeplot(amethod,jacdist,jactree)
+  makeplot(amethod,jacdist,jactree,k)
 }
 if (T){
-  amethod <- 'simpson-ward' 
+  amethod <- 'simpson-ward'
+  k=4
   jacdist <- as.data.frame(as.matrix(simil(plotdata,method='Simpson')))
   jactree <- agnes(jacdist, method='ward')
-  makeplot(amethod,jacdist,jactree)
+  makeplot(amethod,jacdist,jactree,k)
 }
 if (T){
-  amethod <- 'euclid-ward' 
+  amethod <- 'euclid-ward'
+  k=5
   jactree <- agnes(plotdata, method='ward')
-  makeplot(amethod,jacdist,jactree)
+  makeplot(amethod,jacdist,jactree,k)
 }
 
 
@@ -210,7 +221,9 @@ sil.diana <- 0
 sil.kmeans <- 0
 sil.single <- 0
 sil.complete <- 0
-for (k in 2:16){
+sil.wardeuc <- 0
+sil.kmeanseuc <- 0
+for (k in 2:20){
 sil.bray1 <- (distbray %>% agnes(method = 'average') %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
 sil.jac1 <- (distjac %>% agnes(method = 'average') %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
 sil.sim1 <- (distsim %>% agnes(method = 'average') %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
@@ -219,6 +232,8 @@ sil.diana1 <- (distbray %>% diana %>% cutree(k=k) %>% silhouette(distbray))[,3]%
 sil.kmeans1 <- (kmeans(distbray, centers = k)$cluster %>% silhouette(distbray))[,3] %>% mean
 sil.single1 <- (distbray %>% agnes(method = 'single') %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
 sil.complete1 <- (distbray %>% agnes(method = 'complete') %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
+sil.wardeuc1 <- (plotdata %>% agnes(method = 'ward') %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
+sil.kmeanseuc1 <- (kmeans(plotdata, centers = k)$cluster %>% silhouette(distbray))[,3] %>% mean
 
 klevel <- c(klevel, k)
 sil.bray <- c(sil.bray, sil.bray1)
@@ -228,9 +243,38 @@ sil.ward <- c(sil.ward, sil.ward1)
 sil.diana <- c(sil.diana, sil.diana1)
 sil.kmeans <- c(sil.kmeans, sil.kmeans1)
 sil.single <- c(sil.single, sil.single1)
-sil.complete <- c(sil.complete, sil.complete1)}
-sil.table <- as.data.frame(cbind(klevel,sil.bray,sil.jac,sil.sim,sil.ward,sil.diana,sil.kmeans,sil.single,sil.complete))
+sil.complete <- c(sil.complete, sil.complete1)
+sil.wardeuc <- c(sil.wardeuc, sil.wardeuc1)
+sil.kmeanseuc <- c(sil.kmeanseuc, sil.kmeanseuc1)
+}
+sil.table <- as.data.frame(cbind(klevel,sil.bray,sil.jac,sil.sim,sil.ward,sil.diana,sil.kmeans,sil.single,sil.complete,sil.wardeuc,sil.kmeanseuc))
 sil.table <- sil.table[-1,]
+
+
+#indicator analysis
+k=5
+distbray <- vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)
+groups <- distbray %>% agnes(method = 'average') %>% cutree(k=k) 
+tree <- agnes(distbray,method = 'average')
+amethod <- 'test2'
+makeplot(amethod, distbray,tree,k)
+spp.freq <- syntable(plotdata, groups)
+spp.freq <- spp.freq$syntable
+spp.mean <- syntable(plotdata, groups,  type = "mean")
+spp.mean <- spp.mean$syntable
+#reanalysis after grouping
+k = 5
+tspp.freq <- t(spp.freq)
+
+if (T){
+  amethod <- 'spp-freq-groups' 
+  jdist <- as.data.frame(as.matrix(vegdist(tspp.freq, method='bray', binary=FALSE, na.rm=T)))
+  tre <- agnes(jacdist, method='average')
+  makeplot(amethod,jdist,tre,k)
+}
+
+
+
 #----
 distbray2 <- as.data.frame(as.matrix(distbray))
 distbray2 <- (distbray2+constdist)/2
