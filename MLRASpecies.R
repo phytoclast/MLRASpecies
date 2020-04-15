@@ -138,7 +138,7 @@ write.dbf(jactreelist, 'output/usfstreelist.dbf')
 #FIPS
 fipsjacdist <- readRDS("data/fipsjacdist.RDS")
 fipsjacdistdf <- as.data.frame(as.matrix(fipsjacdist))
-jactree <- agnes(fipsjacdistdf, method='average')
+jactree <- agnes(fipsjacdist, method='average')
 #saveRDS(jactree, 'data/fipsjactree.RDS')
 treeofinterest <- jactree
 cutsjac2 <- cutree(treeofinterest, k=2)

@@ -14,10 +14,10 @@ library(goeveg)
 preplotdata <- read.delim("data/GRIN/altgeogrin.txt")
 rownames(preplotdata) <- preplotdata[,1]
 preplotdata <- preplotdata[,-1]
+excluded <- ''
 #excluded <- c('Alabama', 'Arizona', 'Arkansas', 'British_Columbia', 'Connecticut', 'Delaware', 'District_of_Columbia', 'Georgia', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kentucky', 'Louisiana', 'Maryland', 'Massachusetts', 'Minnesota', 'Mississippi', 'Montana', 'Nebraska', 'Nevada', 'New_Brunswick', 'New_Hampshire', 'New_Jersey', 'New_Mexico', 'New_York', 'Newfoundland', 'North_Carolina', 'Northwest_Territory', 'Nova_Scotia', 'Ohio', 'Oklahoma', 'Ontario', 'Oregon', 'Pennsylvania', 'Prince_Edward_Island', 'Quebec', 'Rhode_Island', 'Saskatchewan', 'South_Dakota', 'Vermont', 'Virginia', 'Wisconsin', 'Wyoming', 'Yukon_Territory')
 coltotals <- (apply(preplotdata, MARGIN = 1, FUN = 'sum' ))
 rowtotals <- (apply(preplotdata, MARGIN = 2, FUN = 'sum' ))
-excluded <- ''
 #excluded <- c(names(rowtotals[rowtotals < 200]), 'District_of_Columbia')
 #preplotdata <- preplotdata/(coltotals)*100
 #preplotdata <- as.data.frame(t(t(preplotdata)/(rowtotals)*100)) #totals by plot
@@ -70,72 +70,73 @@ makeplot <- function(amethod,jacdist,jactree,k){
   
 }
 
-#analysis method
+#analysis method ###Important to make sure all dist matrices are as.dist so that cluster analysis interprets correctly.###
 amethod <- 'bray-agnes' 
 if (T){
   amethod <- 'bray-agnes'
   k=15
-  jacdist <- as.data.frame(as.matrix(vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
+  jacdist <- ((vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
   jactree <- agnes(jacdist, method='average')
+  makeplot(amethod,jacdist,jactree,k)
+}
+if (T){
+  amethod <- 'jaccard-agnes'
+  k=15
+  jacdist <- ((vegdist(plotdata, method='jaccard', binary=FALSE, na.rm=T)))
+  jactree <- agnes(jacdist, method='average')
+  makeplot(amethod,jacdist,jactree,k)
+}
+if (T){
+  amethod <- 'bray-ward' 
+  k=9
+  jacdist <- ((vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
+  jactree <- agnes(jacdist, method='ward')
+  makeplot(amethod,jacdist,jactree,k)
+}
+if (T){
+  amethod <- 'bray-diana' 
+  k=10
+  jacdist <- ((vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
+  jactree <- diana(jacdist)
   makeplot(amethod,jacdist,jactree,k)
 }
 if (T){
   amethod <- 'bray-single'
   k=15
-  jacdist <- as.data.frame(as.matrix(vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
+  jacdist <- ((vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
   jactree <- agnes(jacdist, method='single')
   makeplot(amethod,jacdist,jactree,k)
 }
 if (T){
   amethod <- 'bray-complete' 
   k=7
-  jacdist <- as.data.frame(as.matrix(vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
+  jacdist <- ((vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
   jactree <- agnes(jacdist, method='complete')
   makeplot(amethod,jacdist,jactree,k)
 }
-if (T){
-  amethod <- 'bray-diana' 
-  k=10
-  jacdist <- as.data.frame(as.matrix(vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
-  jactree <- diana(jacdist)
-  makeplot(amethod,jacdist,jactree,k)
-}
-if (T){
-  amethod <- 'bray-ward' 
-  k=9
-  jacdist <- as.data.frame(as.matrix(vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
-  jactree <- agnes(jacdist, method='ward')
-  makeplot(amethod,jacdist,jactree,k)
-}
-if (T){
-  amethod <- 'jaccard-agnes'
-  k=15
-  jacdist <- as.data.frame(as.matrix(vegdist(plotdata, method='jaccard', binary=FALSE, na.rm=T)))
-  jactree <- agnes(jacdist, method='average')
-  makeplot(amethod,jacdist,jactree,k)
-}
+
 if (T){
   amethod <- 'simpson-agnes'
   k=4
-  jacdist <- as.data.frame(as.matrix(simil(plotdata,method='Simpson')))
+  jacdist <- as.dist(simil(plotdata,method='Simpson'))
   jactree <- agnes(jacdist, method='average')
   makeplot(amethod,jacdist,jactree,k)
 }
-if (T){
+if (F){
   amethod <- 'simpson-diana'
   k=4
-  jacdist <- as.data.frame(as.matrix(simil(plotdata,method='Simpson')))
+  jacdist <- ((simil(plotdata,method='Simpson')))
   jactree <- diana(jacdist)
   makeplot(amethod,jacdist,jactree,k)
 }
-if (T){
+if (F){
   amethod <- 'simpson-ward'
   k=4
-  jacdist <- as.data.frame(as.matrix(simil(plotdata,method='Simpson')))
+  jacdist <- ((simil(plotdata,method='Simpson')))
   jactree <- agnes(jacdist, method='ward')
   makeplot(amethod,jacdist,jactree,k)
 }
-if (T){
+if (F){
   amethod <- 'euclid-ward'
   k=5
   jactree <- agnes(plotdata, method='ward')
@@ -169,7 +170,7 @@ if (F){
 #constraint compare
 distbray <- vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)
 distjac <- vegdist(plotdata, method='jaccard', binary=FALSE, na.rm=T)
-distsim <- as.data.frame(as.matrix(simil(plotdata,method='Simpson')))
+distsim <- as.dist(simil(plotdata,method='Simpson'))
 constdist <- read.delim("data/GRIN/constraints.txt")
 rownames(constdist) <- constdist[,1]
 constdist <- constdist[,-1]
@@ -204,7 +205,7 @@ coph.dianasim
 #----
 distbray <- vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)
 distjac <- vegdist(plotdata, method='jaccard', binary=FALSE, na.rm=T)
-distsim <- as.data.frame(as.matrix(simil(plotdata,method='Simpson')))
+distsim <- as.dist(simil(plotdata,method='Simpson'))
 tree <- agnes(distbray, method='average')
 cuttree <- cutree(tree, k = 8)
 siltree <- silhouette(cuttree, distbray)
@@ -247,17 +248,23 @@ sil.complete <- c(sil.complete, sil.complete1)
 sil.wardeuc <- c(sil.wardeuc, sil.wardeuc1)
 sil.kmeanseuc <- c(sil.kmeanseuc, sil.kmeanseuc1)
 }
-sil.table <- as.data.frame(cbind(klevel,sil.bray,sil.jac,sil.sim,sil.ward,sil.diana,sil.kmeans,sil.single,sil.complete,sil.wardeuc,sil.kmeanseuc))
+sil.table <- as.data.frame(cbind(klevel,sil.bray,sil.jac,sil.sim,sil.ward,sil.diana,sil.kmeans,sil.single,sil.complete))
 sil.table <- sil.table[-1,]
 
 
 #indicator analysis
-k=5
+k=15
 distbray <- vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)
 groups <- distbray %>% agnes(method = 'average') %>% cutree(k=k) 
-tree <- agnes(distbray,method = 'average')
+tree <- agnes(distbray, method='average')
 amethod <- 'test2'
-makeplot(amethod, distbray,tree,k)
+#makeplot(amethod, distbray,tree,k)
+
+
+
+
+
+
 spp.freq <- syntable(plotdata, groups)
 spp.freq <- spp.freq$syntable
 spp.mean <- syntable(plotdata, groups,  type = "mean")
