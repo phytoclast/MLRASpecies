@@ -148,16 +148,20 @@ library(phytools)
 
 if (F){
   amethod <- 'bray-nj' 
-  jacdist <- (as.matrix(vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
+  jacdist <- ((vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
   jactree <- nj(jacdist)
   filename <- paste0('output/GRIN_',amethod,'.png')
   jactree <- root(jactree, outgroup = 'North.Central_Pacific')
+  w <- 800
+  h <- nrow(plotdata)*12+80
+  u <- 12
+  
   png(filename=filename,width = w, height = h, units = "px", pointsize = u)
   par(mar = c(2,0,1,13))
-  plot(((jactree2)), main=paste('floristic simularity', amethod,'method of', 'GRIN genera'), label.offset=0.05, direction='right', font=1, cex=0.85)
+  plot(((jactree)), main=paste('floristic simularity', amethod,'method of', 'GRIN genera'), label.offset=0.05, direction='right', font=1, cex=0.85)
   dev.off()
   filename <- paste0('output/GRIN_',amethod,'-ultrametric.png')
-  jactree3 <- force.ultrametric(jactree2, method=c("extend"))
+  jactree3 <- force.ultrametric(jactree, method=c("extend"))
   png(filename=filename,width = w, height = h, units = "px", pointsize = u)
   par(mar = c(2,0,1,13))
   plot(((jactree3)), main=paste('floristic simularity', amethod,'method of', 'GRIN genera-ultrametric'), label.offset=0.05, direction='right', font=1, cex=0.85)
