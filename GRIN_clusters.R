@@ -192,6 +192,8 @@ if (F){
 }
 library(phytools)
 library(phangorn)
+d <- ((vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
+
 t1 <- t1%>%as.hclust() %>% as.phylo()
 t2 <- t2%>%as.hclust() %>% as.phylo()
 t3 <- t3%>%as.hclust() %>% as.phylo()
@@ -199,17 +201,24 @@ t4 <- t4%>%as.hclust() %>% as.phylo()
 t5 <- t5%>%as.hclust() %>% as.phylo()
 t6 <- t6%>%as.hclust() %>% as.phylo()
 Trees <- list(t1,t2,t3,t4,t5,t6)
-Tcon <- consensus(Trees, p=.5) %>% as.phylo()
-Tree <- nnls.phylo(Tcon, distbray)
-Tree <- Tree %>% root(outgroup = 4) %>% force.ultrametric(method=nnls.phylo) %>% as.hclust()
+Tree <- consensus(Trees, p=.5) %>% as.phylo()
+Tree <- Tree %>% root(outgroup = c('Antarctic_Continent', 'Subantarctic_Islands'))
+plot(Tree, cex=.5)
 
+Tree <- multi2di(Tree, random = F)
+plot(Tree, cex=.5)
+Tree <- nnls.phylo(Tree, d)
+Tree <- multi2di(Tree, random = F)
+plot(Tree, cex=.5)
+Tree <- Tree %>% force.ultrametric(method='nnls.phylo')# %>% as.hclust()
+plot(Tree, cex=.5)
 
 
 
 amethod <- 'consensis'
 makeplot(amethod,distbray,Tcon,k)
 
-plot(Tcon, cex=.5)
+plot(Tree, cex=.5)
 is.rooted(Tree)
 
 
