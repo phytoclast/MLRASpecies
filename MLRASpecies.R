@@ -266,3 +266,107 @@ plot(as.phylo(as.hclust(jactree)), main='EPA floristic simularity - jaccard metr
 dev.off()
 
 
+
+
+plotdata <- readRDS('data/fipsmatrix.RDS')
+
+pcount <- apply(plotdata, MARGIN = 1, FUN = 'sum')
+
+pcount2 <- pcount[pcount < 200 | grepl('F02',names(pcount))| grepl('F15',names(pcount))]
+excluded <- names(pcount2)
+#d <- vegdist(plotdata, method = 'bray')
+#saveRDS(d, "data/fipsbraydist.RDS")
+#d <- as.dist(simil(plotdata,method='Simpson'))
+#saveRDS(d, "data/fipssimdist.RDS")
+
+distbray <- readRDS("data/fipsbraydist.RDS")
+distjac <- readRDS("data/fipsjacdist.RDS")
+distsim <-  readRDS("data/fipssimdist.RDS")
+
+plotdata <- plotdata[!rownames(plotdata) %in% excluded, !colnames(plotdata) %in% excluded]
+
+distbray <- as.dist(as.matrix(distbray)[!rownames(as.matrix(distbray)) %in% excluded, !colnames(as.matrix(distbray)) %in% excluded])
+
+distjac <- as.dist(as.matrix(distjac)[!rownames(as.matrix(distjac)) %in% excluded, !colnames(as.matrix(distjac)) %in% excluded])
+
+distsim <- as.dist(as.matrix(distsim)[!rownames(as.matrix(distsim)) %in% excluded, !colnames(as.matrix(distsim)) %in% excluded])
+
+tb <- distbray %>% agnes(method = 'average')
+tj <- distjac %>% agnes(method = 'average')
+tw <- distbray %>% agnes(method = 'ward') 
+ts <- distsim %>% agnes(method = 'average') 
+td <- distbray %>% diana 
+
+silanalysis2 <- function(input){
+  #distbray <- vegdist(input, method='bray', binary=FALSE, na.rm=T)
+  #distjac <- vegdist(input, method='jaccard', binary=FALSE, na.rm=T)
+  #distsim <- as.dist(simil(input,method='Simpson'))
+  klist <- c(2:24,64,256)
+  maxcluster <- min(24, nrow(input)-1)
+  k <- 2
+  klevel <- 0
+  sil.bray <- 0
+  sil.jac <- 0
+  sil.sim <- 0
+  sil.ward <- 0
+  sil.diana <- 0
+  
+  for (k in 1:25){
+    sil.bray1 <- (tb %>% cutree(k=klist[k]) %>% silhouette(distbray))[,3]%>% mean#[,c(1,3)] %>% as.matrix()%>%as.data.frame() 
+    #sil.bray1 <- (aggregate(sil.bray1[,2], by=list(sil.bray1[,1]), FUN='mean'))[,2] %>% mean()
+    sil.jac1 <- (tj %>% cutree(k=klist[k]) %>% silhouette(distbray))[,3]%>% mean#[,c(1,3)] %>% as.matrix()%>%as.data.frame() 
+    #sil.jac1 <- (aggregate(sil.jac1[,2], by=list(sil.jac1[,1]), FUN='mean'))[,2] %>% mean()
+    sil.sim1 <- (ts %>% cutree(k=klist[k]) %>% silhouette(distbray))[,3]%>% mean#[,c(1,3)] %>% as.matrix()%>%as.data.frame() 
+    #sil.sim1 <- (aggregate(sil.sim1[,2], by=list(sil.sim1[,1]), FUN='mean'))[,2] %>% mean()
+    sil.ward1 <- (tw %>% cutree(k=klist[k]) %>% silhouette(distbray))[,3]%>% mean#[,c(1,3)] %>% as.matrix()%>%as.data.frame() 
+    #sil.ward1 <- (aggregate(sil.ward1[,2], by=list(sil.ward1[,1]), FUN='mean'))[,2] %>% mean()
+    sil.diana1 <- (td %>% cutree(k=klist[k]) %>% silhouette(distbray))[,3]%>% mean#[,c(1,3)] %>% as.matrix()%>%as.data.frame() 
+    #sil.diana1 <- (aggregate(sil.diana1[,2], by=list(sil.diana1[,1]), FUN='mean'))[,2] %>% mean()
+    
+    klevel <- c(klevel, klist[k])
+    sil.bray <- c(sil.bray, sil.bray1)
+    sil.jac <- c(sil.jac, sil.jac1)
+    sil.sim <- c(sil.sim, sil.sim1)
+    sil.ward <- c(sil.ward, sil.ward1)
+    sil.diana <- c(sil.diana, sil.diana1)
+  }
+  sil.table <- as.data.frame(cbind(klevel,sil.bray,sil.jac,sil.sim,sil.ward,sil.diana))
+  sil.table <- sil.table[-1,]
+  sil.table2 <<- sil.table
+  return(sil.table)}
+silanalysis2(plotdata)
+
+
+
+k.agnes <- c(2,4,8,16,32,64,256)
+
+
+
+agnes.cut1<- tj %>% cutree(k=k.agnes[1])
+agnes.cut2<- tj %>% cutree(k=k.agnes[2])
+agnes.cut3<- tj %>% cutree(k=k.agnes[3])
+agnes.cut4<- tj %>% cutree(k=k.agnes[4])
+agnes.cut5<- tj %>% cutree(k=k.agnes[5])
+agnes.cut6<- tj %>% cutree(k=k.agnes[6])
+agnes.cut7<- tj %>% cutree(k=k.agnes[7])
+
+fips <- rownames(as.matrix(distbray))
+
+fipsclust <- as.data.frame(cbind(fips,agnes.cut1,agnes.cut2,agnes.cut3,agnes.cut4,agnes.cut5,agnes.cut6,agnes.cut7))
+
+
+write.dbf(fipsclust, 'output/fipsclust.dbf')
+
+coph.agnes <- cor(cophenetic(as.hclust(ts)), cophenetic(as.hclust(tb)))
+coph.jaccard <- cor(cophenetic(as.hclust(ts)), cophenetic(as.hclust(tj)))
+coph.ward <- cor(cophenetic(as.hclust(ts)), cophenetic(as.hclust(tw)))
+coph.diana <- cor(cophenetic(as.hclust(ts)), cophenetic(as.hclust(td)))
+coph.sim <- cor(cophenetic(as.hclust(ts)), cophenetic(as.hclust(ts)))
+
+
+coph.agnes
+coph.jaccard
+coph.ward
+coph.diana
+coph.sim
+

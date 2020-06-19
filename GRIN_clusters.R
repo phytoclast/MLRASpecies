@@ -190,6 +190,22 @@ if (F){
   t <- diana(distbet)
   makeplot(a,distbet,tree,k)
 }
+
+if (T){
+  a1 <- 'agnes-kulczynski'
+  k=14
+  d <- ((vegdist(plotdata, method='kulczynski', binary=FALSE, na.rm=T)))
+  t1 <- agnes(d, method='average')
+  makeplot(a1,d,t1,k)
+}
+if (T){
+  a1 <- 'ward-kulczynski'
+  k=14
+  d <- ((vegdist(plotdata, method='kulczynski', binary=FALSE, na.rm=T)))
+  t1 <- agnes(d, method='ward')
+  makeplot(a1,d,t1,k)
+}
+
 library(phytools)
 library(phangorn)
 d <- ((vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))

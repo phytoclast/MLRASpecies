@@ -18,6 +18,7 @@ plotdata <- readRDS('data/usfssubsecmatrix.RDS')
 distbray <- readRDS('data/usfssubsec.distbray.RDS')
 distjac <- readRDS('data/usfssubsec.distjac.RDS')
 distsim <- readRDS('data/usfssubsec.distsim.RDS')
+distkulc <- readRDS('data/usfssubsec.distkulc.RDS')
 
 #betasim
 betasim <- function(p){
@@ -48,12 +49,14 @@ betasim2 <- function(p){
 #distjac <- vegdist(plotdata, method='jaccard', binary=FALSE, na.rm=T)
 #distsim <- as.dist(simil(plotdata,method='Simpson'))
 #distbeta <- betasim(plotdata)
-distbeta2 <- betasim2(plotdata)
+#distkulc <- vegdist(plotdata, method='kulczynski', binary=FALSE, na.rm=T)
+#distbeta2 <- betasim2(plotdata)
 #saveRDS(distbray,'data/usfssubsec.distbray.RDS')
 #saveRDS(distjac,'data/usfssubsec.distjac.RDS')
 #saveRDS(distsim,'data/usfssubsec.distsim.RDS')
 #saveRDS(distbeta,'data/usfssubsec.distbeta.RDS')
-saveRDS(distbeta2,'data/usfssubsec.distbeta2.RDS')
+#saveRDS(distkulc,'data/usfssubsec.distkulc.RDS')
+#saveRDS(distbeta2,'data/usfssubsec.distbeta2.RDS')
 
 k <- 2
 klevel <- 0
@@ -67,6 +70,8 @@ sil.jdiana <- 0
 sil.complete <- 0
 sil.wardeuc <- 0
 sil.kmeanseuc <- 0
+sil.kulc <- 0
+sil.wardkulc <- 0
 for (k in 2:24){
   sil.bray1 <- (distbray %>% agnes(method = 'average') %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
   sil.jac1 <- (distjac %>% agnes(method = 'average') %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
@@ -76,23 +81,27 @@ for (k in 2:24){
   sil.kmeans1 <- (kmeans(distbray, centers = k)$cluster %>% silhouette(distbray))[,3] %>% mean
   sil.jdiana1 <- (distjac %>% diana %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
   sil.complete1 <- (distbray %>% agnes(method = 'complete') %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
+  sil.kulc1 <- (distkulc %>% agnes(method = 'average') %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
+  sil.wardkulc1 <- (distkulc %>% agnes(method = 'ward') %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
+  
 
   klevel <- c(klevel, k)
   sil.bray <- c(sil.bray, sil.bray1)
   sil.jac <- c(sil.jac, sil.jac1)
-  sil.sim <- c(sil.sim, sil.sim1)
   sil.ward <- c(sil.ward, sil.ward1)
   sil.diana <- c(sil.diana, sil.diana1)
   sil.kmeans <- c(sil.kmeans, sil.kmeans1)
   sil.jdiana <- c(sil.jdiana, sil.jdiana1)
   sil.complete <- c(sil.complete, sil.complete1)
+  sil.kulc <- c(sil.kulc, sil.kulc1)
+  sil.wardkulc <- c(sil.wardkulc, sil.wardkulc1)
 }
-sil.table <- as.data.frame(cbind(klevel,sil.bray,sil.jac,sil.beta,sil.ward,sil.diana,sil.kmeans,sil.jdiana,sil.complete))
+sil.table <- as.data.frame(cbind(klevel,sil.bray,sil.jac,sil.beta,sil.ward,sil.diana,sil.kmeans,sil.jdiana,sil.complete,sil.kulc,sil.wardkulc))
 sil.table <- sil.table[-1,]
 #saveRDS(sil.table,'output/usfssubsec.sil.table.RDS')
 
 
-k.agnes <- c(2,3,4,7,10,16,24)
+k.agnes <- c(2,3,4,8,10,16,24)
 k.ward <- c(2,3,4,6,11,16,24)
 k.diana <- c(2,3,4,7,10,16,24)
 
@@ -129,9 +138,31 @@ simp.cut7<- distsim %>% agnes(method = 'average') %>% cutree(k=k.agnes[7])
 
 
 usfsclust <- as.data.frame(cbind(agnes.cut1,agnes.cut2,agnes.cut3,agnes.cut4,agnes.cut5,agnes.cut6,agnes.cut7,
-                   ward.cut1,ward.cut2,ward.cut3,ward.cut4,ward.cut5,ward.cut6,ward.cut7,
-                   diana.cut1,diana.cut2,diana.cut3,diana.cut4,diana.cut5,diana.cut6,diana.cut7,
-                   simp.cut1,simp.cut2,simp.cut3,simp.cut4,simp.cut5,simp.cut6,simp.cut7))
+                                 ward.cut1,ward.cut2,ward.cut3,ward.cut4,ward.cut5,ward.cut6,ward.cut7,
+                                 diana.cut1,diana.cut2,diana.cut3,diana.cut4,diana.cut5,diana.cut6,diana.cut7,
+                                 simp.cut1,simp.cut2,simp.cut3,simp.cut4,simp.cut5,simp.cut6,simp.cut7))
+usfsclust$subsect <- rownames(usfsclust)
+
+kulc.cut1<- distkulc %>% agnes(method = 'average') %>% cutree(k=k.agnes[1])
+kulc.cut2<- distkulc %>% agnes(method = 'average') %>% cutree(k=k.agnes[2])
+kulc.cut3<- distkulc %>% agnes(method = 'average') %>% cutree(k=k.agnes[3])
+kulc.cut4<- distkulc %>% agnes(method = 'average') %>% cutree(k=k.agnes[4])
+kulc.cut5<- distkulc %>% agnes(method = 'average') %>% cutree(k=k.agnes[5])
+kulc.cut6<- distkulc %>% agnes(method = 'average') %>% cutree(k=k.agnes[6])
+kulc.cut7<- distkulc %>% agnes(method = 'average') %>% cutree(k=k.agnes[7])
+
+kward.cut1<- distkulc %>% agnes(method = 'ward') %>% cutree(k=k.agnes[1])
+kward.cut2<- distkulc %>% agnes(method = 'ward') %>% cutree(k=k.agnes[2])
+kward.cut3<- distkulc %>% agnes(method = 'ward') %>% cutree(k=k.agnes[3])
+kward.cut4<- distkulc %>% agnes(method = 'ward') %>% cutree(k=k.agnes[4])
+kward.cut5<- distkulc %>% agnes(method = 'ward') %>% cutree(k=k.agnes[5])
+kward.cut6<- distkulc %>% agnes(method = 'ward') %>% cutree(k=k.agnes[6])
+kward.cut7<- distkulc %>% agnes(method = 'ward') %>% cutree(k=k.agnes[7])
+
+
+
+
+usfsclust <- as.data.frame(cbind(kulc.cut1, kulc.cut1, kulc.cut2, kulc.cut3, kulc.cut4, kulc.cut5, kulc.cut6, kulc.cut7, kward.cut1, kward.cut2, kward.cut3, kward.cut4, kward.cut5, kward.cut6, kward.cut7))
 usfsclust$subsect <- rownames(usfsclust)
 
 write.dbf(usfsclust, 'output/usfsclust.dbf')
