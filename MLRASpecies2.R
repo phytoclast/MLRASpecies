@@ -73,16 +73,16 @@ sil.kmeanseuc <- 0
 sil.kulc <- 0
 sil.wardkulc <- 0
 for (k in 2:24){
-  sil.bray1 <- (distbray %>% agnes(method = 'average') %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
-  sil.jac1 <- (distjac %>% agnes(method = 'average') %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
-  sil.beta1 <- (distsim %>% agnes(method = 'average') %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
-  sil.ward1 <- (distbray %>% agnes(method = 'ward') %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
-  sil.diana1 <- (distbray %>% diana %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
-  sil.kmeans1 <- (kmeans(distbray, centers = k)$cluster %>% silhouette(distbray))[,3] %>% mean
-  sil.jdiana1 <- (distjac %>% diana %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
-  sil.complete1 <- (distbray %>% agnes(method = 'complete') %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
-  sil.kulc1 <- (distkulc %>% agnes(method = 'average') %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
-  sil.wardkulc1 <- (distkulc %>% agnes(method = 'ward') %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
+  sil.bray1 <- (distbray %>% agnes(method = 'average') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+  sil.jac1 <- (distjac %>% agnes(method = 'average') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+  sil.beta1 <- (distsim %>% agnes(method = 'average') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+  sil.ward1 <- (distbray %>% agnes(method = 'ward') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+  sil.diana1 <- (distbray %>% diana %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+  sil.kmeans1 <- (kmeans(distbray, centers = k)$cluster %>% silhouette(distkulc))[,3] %>% mean
+  sil.jdiana1 <- (distjac %>% diana %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+  sil.complete1 <- (distbray %>% agnes(method = 'complete') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+  sil.kulc1 <- (distkulc %>% agnes(method = 'average') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+  sil.wardkulc1 <- (distkulc %>% agnes(method = 'ward') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
   
 
   klevel <- c(klevel, k)
@@ -318,3 +318,41 @@ silanalysis2 <- function(input){
   sil.table2 <<- sil.table
   return(sil.table)}
 silanalysis2(plotdata)
+
+
+##### hybrid analysis ----
+k <- 100#min(max(floor(nrow(plotdata)/10),2),10)
+d <- distkulc #((vegdist(plotdata, method='kulczynski', binary=FALSE, na.rm=T)))
+t <- agnes(d, method='ward')
+groups <- cutree(t, k = k)
+name <- names(groups)
+clust <- unname(groups)
+groupdf <- as.data.frame(cbind(name, clust))
+groupdf$clust <- (as.numeric(as.character(groupdf$clust)))
+maxcluster <- max(groupdf$clust)
+numberzeros <- nrow(groupdf[(groupdf$clust == 0),])
+whichrecords <- which(groupdf$clust == 0)
+if (nrow(groupdf[groupdf$clust == 0,]) != 0){
+  for (i in 1:numberzeros){ #assign all zero clusters to unique cluster number.
+    groupdf[whichrecords[i],]$clust <- maxcluster+i}}
+groupdf$p <- 1/2^0.5
+groupdf$clust <- paste0('c',groupdf$clust)
+m <- makecommunitydataset(groupdf, row = 'name', column = 'clust', value = 'p')
+d1 <- vegdist(m, method = 'euclidean')
+d1tab <- as.matrix(d1)
+dtab <- as.matrix(d)
+d2 <- d + d1/20
+t1 <- agnes(d2, method='average')
+
+k.agnes <- c(2,3,4,8,10,16,24)
+kulc.cut1<- t1 %>% cutree(k=k.agnes[1])
+kulc.cut2<- t1 %>% cutree(k=k.agnes[2])
+kulc.cut3<- t1 %>% cutree(k=k.agnes[3])
+kulc.cut4<- t1 %>% cutree(k=k.agnes[4])
+kulc.cut5<- t1 %>% cutree(k=k.agnes[5])
+kulc.cut6<- t1 %>% cutree(k=k.agnes[6])
+kulc.cut7<- t1 %>% cutree(k=k.agnes[7])
+
+usfsclust <- as.data.frame(cbind(kulc.cut1, kulc.cut1, kulc.cut2, kulc.cut3, kulc.cut4, kulc.cut5, kulc.cut6, kulc.cut7))
+usfsclust$subsect <- rownames(usfsclust)
+write.dbf(usfsclust, 'output/usfsclust.dbf')
