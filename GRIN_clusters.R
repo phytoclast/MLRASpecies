@@ -520,5 +520,30 @@ t1 <- agnes(d2, method='average')
 k2 <- 14
 a1 <- 'hybrid_ward_to_upgma'
 makeplot(a1,d,t1,k2)
+#### cophenetic bridge----
+k2 <-14
+d <- ((vegdist(plotdata, method='kulczynski', binary=FALSE, na.rm=T)))
+tw <- agnes(d, method='ward')
+tu <- agnes(d, method='average')
+makeplot('testupgma',d,tu,k2)
+length(d)
+makeplot('testward',d,tw,k2)
+
+coph.tw <- cophenetic(tw)/mean(cophenetic(tw))
+d2 <- as.matrix(coph.tw)
+d2a <- as.dist(ifelse(d2 > 1,1,d2))
+t2 <- agnes(d2a, method='average')
+makeplot('test2',d,t2,k2)
+
+coph.tu <- cophenetic(tu)/mean(cophenetic(tu))
+d2 <- as.matrix(coph.tu)
+d2b <- as.dist(ifelse(d2 < 1,1,d2))
+t2 <- agnes(d2b, method='average')
+makeplot('test2',d,t2,k2)
+
+d3 <- (coph.tw^(1/2)+coph.tu^2)/2
+t3 <- agnes(d3, method='average')
+makeplot('testupgmaward',d,t3,k2)
+
 
 
