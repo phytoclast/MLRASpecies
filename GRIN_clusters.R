@@ -541,7 +541,7 @@ d2b <- as.dist(ifelse(d2 < 1,1,d2))
 t2 <- agnes(d2b, method='average')
 makeplot('test2',d,t2,k2)
 
-d3 <- (coph.tw^(1/2)+coph.tu^2)/2
+d3 <- (coph.tw^(1/2)+d^2*2)/3
 t3 <- agnes(d3, method='average')
 makeplot('testupgmaward',d,t3,k2)
 

@@ -58,6 +58,18 @@ betasim2 <- function(p){
 #saveRDS(distkulc,'data/usfssubsec.distkulc.RDS')
 #saveRDS(distbeta2,'data/usfssubsec.distbeta2.RDS')
 
+#### test different algorythms ----
+t.bray <- distbray %>% agnes(method = 'average')
+t.jac <- distjac %>% agnes(method = 'average') 
+t.ward <- distbray %>% agnes(method = 'ward') 
+t.diana <- distbray %>% diana 
+t.kulc <- distkulc %>% agnes(method = 'average') 
+t.wkul <- distkulc %>% agnes(method = 'ward')
+d.ku <- cophenetic(t.kulc)/mean(cophenetic(t.kulc))
+d.kw <- cophenetic(t.wkul)/mean(cophenetic(t.wkul))
+d.hybrid <- (d.kw^0.5+distkulc^2)/2
+t.hybrid <- d.hybrid %>% agnes(method = 'average')
+
 k <- 2
 klevel <- 0
 sil.bray <- 0
@@ -72,17 +84,18 @@ sil.wardeuc <- 0
 sil.kmeanseuc <- 0
 sil.kulc <- 0
 sil.wardkulc <- 0
+sil.hybrid <- 0
+
+
+
 for (k in 2:24){
-  sil.bray1 <- (distbray %>% agnes(method = 'average') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
-  sil.jac1 <- (distjac %>% agnes(method = 'average') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
-  sil.beta1 <- (distsim %>% agnes(method = 'average') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
-  sil.ward1 <- (distbray %>% agnes(method = 'ward') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
-  sil.diana1 <- (distbray %>% diana %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
-  sil.kmeans1 <- (kmeans(distbray, centers = k)$cluster %>% silhouette(distkulc))[,3] %>% mean
-  sil.jdiana1 <- (distjac %>% diana %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
-  sil.complete1 <- (distbray %>% agnes(method = 'complete') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
-  sil.kulc1 <- (distkulc %>% agnes(method = 'average') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
-  sil.wardkulc1 <- (distkulc %>% agnes(method = 'ward') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+  sil.bray1 <- (t.bray %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+  sil.jac1 <- (t.jac %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+  sil.ward1 <- (t.ward %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+  sil.diana1 <- (t.diana %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+  sil.kulc1 <- (t.kulc %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+  sil.wardkulc1 <- (t.wkul %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+  sil.hybrid1 <- (t.hybrid %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
   
 
   klevel <- c(klevel, k)
@@ -90,13 +103,11 @@ for (k in 2:24){
   sil.jac <- c(sil.jac, sil.jac1)
   sil.ward <- c(sil.ward, sil.ward1)
   sil.diana <- c(sil.diana, sil.diana1)
-  sil.kmeans <- c(sil.kmeans, sil.kmeans1)
-  sil.jdiana <- c(sil.jdiana, sil.jdiana1)
-  sil.complete <- c(sil.complete, sil.complete1)
   sil.kulc <- c(sil.kulc, sil.kulc1)
   sil.wardkulc <- c(sil.wardkulc, sil.wardkulc1)
+  sil.hybrid <- c(sil.hybrid, sil.hybrid1)
 }
-sil.table <- as.data.frame(cbind(klevel,sil.bray,sil.jac,sil.beta,sil.ward,sil.diana,sil.kmeans,sil.jdiana,sil.complete,sil.kulc,sil.wardkulc))
+sil.table <- as.data.frame(cbind(klevel,sil.bray,sil.jac,sil.ward,sil.diana,sil.kulc,sil.wardkulc,sil.hybrid))
 sil.table <- sil.table[-1,]
 #saveRDS(sil.table,'output/usfssubsec.sil.table.RDS')
 
@@ -321,6 +332,7 @@ silanalysis2(plotdata)
 
 
 ##### hybrid analysis ----
+#grouping method
 k <- 100#min(max(floor(nrow(plotdata)/10),2),10)
 d <- distkulc #((vegdist(plotdata, method='kulczynski', binary=FALSE, na.rm=T)))
 t <- agnes(d, method='ward')
@@ -343,6 +355,15 @@ d1tab <- as.matrix(d1)
 dtab <- as.matrix(d)
 d2 <- d + d1/20
 t1 <- agnes(d2, method='average')
+#merge method
+t.kulc <- distkulc %>% agnes(method = 'average') 
+t.wkul <- distkulc %>% agnes(method = 'ward')
+d.ku <- cophenetic(t.kulc)/mean(cophenetic(t.kulc))
+d.kw <- cophenetic(t.wkul)/mean(cophenetic(t.wkul))
+d.hybrid <- (d.kw^0.5+distkulc^2)/2
+t1 <- d.hybrid %>% agnes(method = 'average')
+
+
 
 k.agnes <- c(2,3,4,8,10,16,24)
 kulc.cut1<- t1 %>% cutree(k=k.agnes[1])
