@@ -18,7 +18,7 @@ excluded <- ''
 #excluded <- c('Alabama', 'Arizona', 'Arkansas', 'British_Columbia', 'Connecticut', 'Delaware', 'District_of_Columbia', 'Georgia', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kentucky', 'Louisiana', 'Maryland', 'Massachusetts', 'Minnesota', 'Mississippi', 'Montana', 'Nebraska', 'Nevada', 'New_Brunswick', 'New_Hampshire', 'New_Jersey', 'New_Mexico', 'New_York', 'Newfoundland', 'North_Carolina', 'Northwest_Territory', 'Nova_Scotia', 'Ohio', 'Oklahoma', 'Ontario', 'Oregon', 'Pennsylvania', 'Prince_Edward_Island', 'Quebec', 'Rhode_Island', 'Saskatchewan', 'South_Dakota', 'Vermont', 'Virginia', 'Wisconsin', 'Wyoming', 'Yukon_Territory')
 coltotals <- (apply(preplotdata, MARGIN = 1, FUN = 'sum' ))
 rowtotals <- (apply(preplotdata, MARGIN = 2, FUN = 'sum' ))
-excluded <- c(names(rowtotals[rowtotals < 4]), 'District_of_Columbia')
+excluded <- c(names(rowtotals[rowtotals < 10]), 'District_of_Columbia')
 #preplotdata <- preplotdata/(coltotals)*100
 #preplotdata <- as.data.frame(t(t(preplotdata)/(rowtotals)*100)) #totals by plot
 preplotdata <- preplotdata[order(row.names(preplotdata), decreasing = FALSE),sort(colnames(preplotdata), decreasing = FALSE)]
@@ -47,12 +47,13 @@ betasim2 <- function(p){
 }
 
 #makeplot
-makeplot <- function(a,jacdist,jactree,k){
+
+makeplot <- function(a,d,t,k){
   filename <- paste0('output/GRIN_',a,'.png')
-  
+  t <- as.hclust(t)
   #make cuts and reformat dendrogram
   ngroups=k
-  groups <- cutree(jactree, k = ngroups)
+  groups <- cutree(t, k = ngroups)
   
   soilplot <- names(groups)
   clust <- unname(groups)
@@ -65,14 +66,14 @@ makeplot <- function(a,jacdist,jactree,k){
     for (i in 1:numberzeros){ #assign all zero clusters to unique cluster number.
       groupdf[whichrecords[i],]$clust <- maxcluster+i}}
   
-  newlabels <- jactree$order.lab
+  newlabels <- t$labels
   newlabels <- as.data.frame(newlabels)
   newlabels$row <- row(newlabels)
   newlabels <- merge(newlabels, groupdf, by.x='newlabels', by.y ='soilplot')
   newlabels$newlabels <- paste(newlabels$clust, newlabels$newlabels)
   newlabels <- newlabels[order(newlabels$row),1]
-  newtree <- jactree
-  newtree$order.lab <- newlabels
+  newtree <- t
+  newtree$labels <- newlabels
   
   dend1 <- color_branches(as.hclust(newtree), k = ngroups)
   dend1 <- color_labels(dend1, k = ngroups)
@@ -206,69 +207,6 @@ if (T){
   makeplot(a1,d,t1,k)
 }
 
-library(phytools)
-library(phangorn)
-d <- ((vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
-
-t1 <- t1%>%as.hclust() %>% as.phylo()
-t2 <- t2%>%as.hclust() %>% as.phylo()
-t3 <- t3%>%as.hclust() %>% as.phylo()
-t4 <- t4%>%as.hclust() %>% as.phylo()
-t5 <- t5%>%as.hclust() %>% as.phylo()
-t6 <- t6%>%as.hclust() %>% as.phylo()
-Trees <- list(t1,t2,t3,t4,t5,t6)
-Tree <- consensus(Trees, p=.5) %>% as.phylo()
-Tree <- Tree %>% root(outgroup = c('Antarctic_Continent', 'Subantarctic_Islands'))
-plot(Tree, cex=.5)
-
-Tree <- multi2di(Tree, random = F)
-plot(Tree, cex=.5)
-Tree <- nnls.phylo(Tree, d)
-Tree <- multi2di(Tree, random = F)
-plot(Tree, cex=.5)
-Tree <- Tree %>% force.ultrametric(method='nnls.phylo')# %>% as.hclust()
-plot(Tree, cex=.5)
-
-
-
-amethod <- 'consensis'
-makeplot(amethod,distbray,Tcon,k)
-
-plot(Tree, cex=.5)
-is.rooted(Tree)
-
-
-rownames(plotdata)
-
-
-
-
-
-
-if (F){
-  a <- 'bray-nj' 
-  jacdist <- ((vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
-  jactree <- nj(jacdist)
-  filename <- paste0('output/GRIN_',a,'.png')
-  jactree <- root(jactree, outgroup = 'North.Central_Pacific')
-  w <- 800
-  h <- nrow(plotdata)*12+80
-  u <- 12
-  
-  png(filename=filename,width = w, height = h, units = "px", pointsize = u)
-  par(mar = c(2,0,1,13))
-  plot(((jactree)), main=paste('floristic simularity', a,'method of', 'GRIN genera'), label.offset=0.05, direction='right', font=1, cex=0.85)
-  dev.off()
-  filename <- paste0('output/GRIN_',a,'-ultrametric.png')
-  jactree3 <- force.ultrametric(jactree, method=c("extend"))
-  png(filename=filename,width = w, height = h, units = "px", pointsize = u)
-  par(mar = c(2,0,1,13))
-  plot(((jactree3)), main=paste('floristic simularity', a,'method of', 'GRIN genera-ultrametric'), label.offset=0.05, direction='right', font=1, cex=0.85)
-  dev.off()
-  
-  
-  write.csv(jacdist, 'output/braydist.csv')
-}
 
 #constraint compare
 distbray <- vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)
@@ -317,14 +255,15 @@ coph.wardkulc
 distbray <- vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)
 distjac <- vegdist(plotdata, method='jaccard', binary=FALSE, na.rm=T)
 distsim <- as.dist(simil(plotdata,method='Simpson'))
-distbet <- betasim2(plotdata)
 distkulc <- vegdist(plotdata, method='kulczynski', binary=FALSE, na.rm=T)
-tree <- agnes(distbray, method='average')
-cuttree <- cutree(tree, k = 8)
-siltree <- silhouette(cuttree, distbray)
 
-summary(siltree)
-mean(siltree[,3])
+tbrayagnes <- distbray %>% agnes(method = 'average')
+tbrayjac <- distjac %>% agnes(method = 'average')
+tbrayward <- distbray %>% agnes(method = 'ward')
+tbraydiana <- distbray %>% diana 
+tsimpagnes <- distsim %>% agnes(method = 'average') 
+tkulcagnes <- distkulc %>% agnes(method = 'average')
+tkulcward <- distkulc %>% agnes(method = 'ward')
 k <- 2
 klevel <- 0
 sil.bray <- 0
@@ -333,29 +272,17 @@ sil.sim <- 0
 sil.ward <- 0
 sil.diana <- 0
 sil.kmeans <- 0
-sil.single <- 0
-sil.complete <- 0
-sil.wardeuc <- 0
-sil.kmeanseuc <- 0
-sil.bet <- 0
-sil.weight <- 0
 sil.kulc <- 0
 sil.wardkulc <- 0
 for (k in 2:20){
-sil.bray1 <- (distbray %>% agnes(method = 'average') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
-sil.jac1 <- (distjac %>% agnes(method = 'average') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
-sil.sim1 <- (distsim %>% agnes(method = 'average') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
-sil.ward1 <- (distbray %>% agnes(method = 'ward') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
-sil.diana1 <- (distbray %>% diana %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
-sil.kmeans1 <- (kmeans(distbray, centers = k)$cluster %>% silhouette(distbray))[,3] %>% mean
-sil.single1 <- (distbray %>% agnes(method = 'single') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
-sil.complete1 <- (distbray %>% agnes(method = 'complete') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
-sil.wardeuc1 <- (plotdata %>% agnes(method = 'ward') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
-sil.kmeanseuc1 <- (kmeans(plotdata, centers = k)$cluster %>% silhouette(distbray))[,3] %>% mean
-sil.bet1 <- (distbet %>% agnes(method = 'average') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
-sil.weight1 <- (distbray %>% agnes(method = 'weighted') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
-sil.kulc1 <- (distkulc %>% agnes(method = 'average') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
-sil.wardkulc1 <- (distkulc %>% agnes(method = 'ward') %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+sil.bray1 <- (tbrayagnes %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+sil.jac1 <- (tbrayjac %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+sil.sim1 <- (tsimpagnes %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+sil.ward1 <- (tbrayward %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+sil.diana1 <- (tbraydiana %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+sil.kmeans1 <- (kmeans(distbray, centers = k)$cluster %>% silhouette(distkulc))[,3] %>% mean
+sil.kulc1 <- (tkulcagnes %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+sil.wardkulc1 <- (tkulcward %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
 
 
 klevel <- c(klevel, k)
@@ -365,16 +292,10 @@ sil.sim <- c(sil.sim, sil.sim1)
 sil.ward <- c(sil.ward, sil.ward1)
 sil.diana <- c(sil.diana, sil.diana1)
 sil.kmeans <- c(sil.kmeans, sil.kmeans1)
-sil.single <- c(sil.single, sil.single1)
-sil.complete <- c(sil.complete, sil.complete1)
-sil.wardeuc <- c(sil.wardeuc, sil.wardeuc1)
-sil.kmeanseuc <- c(sil.kmeanseuc, sil.kmeanseuc1)
-sil.bet <- c(sil.bet, sil.bet1)
-sil.weight <- c(sil.weight, sil.weight1)
 sil.kulc <- c(sil.kulc, sil.kulc1)
 sil.wardkulc <- c(sil.wardkulc, sil.wardkulc1)
 }
-sil.table <- as.data.frame(cbind(klevel,sil.bray,sil.jac,sil.sim,sil.ward,sil.diana,sil.kmeans,sil.single,sil.complete,sil.bet,sil.weight,sil.kulc,sil.wardkulc))
+sil.table <- as.data.frame(cbind(klevel,sil.bray,sil.jac,sil.sim,sil.ward,sil.diana,sil.kmeans,sil.kulc,sil.wardkulc))
 sil.table <- sil.table[-1,]
 
 
@@ -433,7 +354,7 @@ silanalysis2 <- function(input){
   distbray <- vegdist(input, method='bray', binary=FALSE, na.rm=T)
   distjac <- vegdist(input, method='jaccard', binary=FALSE, na.rm=T)
   distsim <- as.dist(simil(input,method='Simpson'))
-  
+
   maxcluster <- min(20, nrow(input)-1)
   k <- 2
   klevel <- 0
@@ -545,5 +466,85 @@ d3 <- (coph.tw^(1/2)+d^2*2)/3
 t3 <- agnes(d3, method='average')
 makeplot('testupgmaward',d,t3,k2)
 
+#isopam----
+library(isopam)
+pamtree <- isopam(plotdata, distance = 'kulczynski')
 
+if (T){
+  a <- 'isopam-kulczynski' 
+  k = 14
+  d <- ((vegdist(plotdata, method='kulczynski', binary=FALSE, na.rm=T)))
+  t <- pamtree$dendro
+  makeplot(a,d,t,k)
+}
+pamtree$analytics
+table <- isotab(pamtree, level = 1)
+table <- table$tab
+as.numeric(as.character((table$`1`)))
+table$x1 <- as.numeric(gsub("[^0-9.-]", "", (table$`1`)))
+table$x2 <- as.numeric(gsub("[^0-9.-]", "", (table$`2`)))
+table$dif <- table$x1-table$x2
+coph <- cophenetic(t)
+d2 <- (coph/mean(coph)*2 + d/mean(d))/3
+t2 <- agnes(d2, method = 'average')
+makeplot('kulczynski-isopam-agnes-hybrid',d2,t2,k)
+
+
+
+distbray <- vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)
+distjac <- vegdist(plotdata, method='jaccard', binary=FALSE, na.rm=T)
+distsim <- as.dist(simil(plotdata,method='Simpson'))
+distkulc <- vegdist(plotdata, method='kulczynski', binary=FALSE, na.rm=T)
+
+tbrayagnes <- distbray %>% agnes(method = 'average')
+tbrayjac <- distjac %>% agnes(method = 'average')
+tbrayward <- distbray %>% agnes(method = 'ward')
+tbraydiana <- distbray %>% diana 
+tsimpagnes <- distsim %>% agnes(method = 'average') 
+tkulcagnes <- distkulc %>% agnes(method = 'average')
+tkulcward <- distkulc %>% agnes(method = 'ward')
+k <- 2
+klevel <- 0
+sil.bray <- 0
+sil.jac <- 0
+sil.sim <- 0
+sil.ward <- 0
+sil.diana <- 0
+sil.kmeans <- 0
+sil.kulc <- 0
+sil.wardkulc <- 0
+sil.isopam <- 0
+for (k in 2:20){
+  sil.bray1 <- (tbrayagnes %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+  sil.jac1 <- (tbrayjac %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+  sil.sim1 <- (tsimpagnes %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+  sil.ward1 <- (tbrayward %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+  sil.diana1 <- (tbraydiana %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+  sil.kmeans1 <- (kmeans(distbray, centers = k)$cluster %>% silhouette(distkulc))[,3] %>% mean
+  sil.kulc1 <- (tkulcagnes %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+  sil.wardkulc1 <- (tkulcward %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+  sil.isopam1 <- (pamtree$dendro %>% cutree(k=k) %>% silhouette(distkulc))[,3]%>% mean
+  
+  klevel <- c(klevel, k)
+  sil.bray <- c(sil.bray, sil.bray1)
+  sil.jac <- c(sil.jac, sil.jac1)
+  sil.sim <- c(sil.sim, sil.sim1)
+  sil.ward <- c(sil.ward, sil.ward1)
+  sil.diana <- c(sil.diana, sil.diana1)
+  sil.kmeans <- c(sil.kmeans, sil.kmeans1)
+  sil.kulc <- c(sil.kulc, sil.kulc1)
+  sil.wardkulc <- c(sil.wardkulc, sil.wardkulc1)
+  sil.isopam <- c(sil.isopam, sil.isopam1)
+}
+sil.table <- as.data.frame(cbind(klevel,sil.bray,sil.jac,sil.sim,sil.ward,sil.diana,sil.kmeans,sil.kulc,sil.wardkulc,sil.isopam))
+sil.table <- sil.table[-1,]
+
+
+cor(cophenetic(tbrayagnes), cophenetic(pamtree$dendro))
+cor(cophenetic(tbrayjac), cophenetic(pamtree$dendro))
+cor(cophenetic(tbraydiana), cophenetic(pamtree$dendro))
+cor(cophenetic(tbrayward), cophenetic(pamtree$dendro))
+cor(cophenetic(tsimpagnes), cophenetic(pamtree$dendro))
+cor(cophenetic(tkulcagnes), cophenetic(pamtree$dendro))
+cor(cophenetic(tkulcward), cophenetic(pamtree$dendro))
 
