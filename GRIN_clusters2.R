@@ -209,7 +209,7 @@ if (T){
 
 #isopam----
 library(isopam)
-pamtree <- isopam(plotdata, distance = 'kulczynski')
+pamtree <- isopam(plotdata, distance = 'kulczynski', stopat = c(1,7))
 
 if (T){
   a <- 'isopam-kulczynski' 
@@ -229,7 +229,7 @@ coph <- cophenetic(pamtree$dendro)
 dbray <- ((vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
 tbward <- agnes(dbray, method='ward')
 dbward <- cophenetic(tbward)
-d2 <- (coph/mean(coph)*2 + dbward/mean(dbward))/3
+d2 <- (coph/mean(coph)*1 + dbward/mean(dbward))/2
 t2 <- agnes(d2, method = 'average')
 makeplot('kisopam-bward-hybrid',d2,t2,k)
 
