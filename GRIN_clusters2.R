@@ -18,7 +18,7 @@ excluded <- ''
 #excluded <- c('Alabama', 'Arizona', 'Arkansas', 'British_Columbia', 'Connecticut', 'Delaware', 'District_of_Columbia', 'Georgia', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kentucky', 'Louisiana', 'Maryland', 'Massachusetts', 'Minnesota', 'Mississippi', 'Montana', 'Nebraska', 'Nevada', 'New_Brunswick', 'New_Hampshire', 'New_Jersey', 'New_Mexico', 'New_York', 'Newfoundland', 'North_Carolina', 'Northwest_Territory', 'Nova_Scotia', 'Ohio', 'Oklahoma', 'Ontario', 'Oregon', 'Pennsylvania', 'Prince_Edward_Island', 'Quebec', 'Rhode_Island', 'Saskatchewan', 'South_Dakota', 'Vermont', 'Virginia', 'Wisconsin', 'Wyoming', 'Yukon_Territory')
 coltotals <- (apply(preplotdata, MARGIN = 1, FUN = 'sum' ))
 rowtotals <- (apply(preplotdata, MARGIN = 2, FUN = 'sum' ))
-excluded <- c(names(rowtotals[rowtotals < 4]), 'District_of_Columbia')
+excluded <- c(names(rowtotals[rowtotals < 40]), 'District_of_Columbia')
 #preplotdata <- preplotdata/(coltotals)*100
 #preplotdata <- as.data.frame(t(t(preplotdata)/(rowtotals)*100)) #totals by plot
 preplotdata <- preplotdata[order(row.names(preplotdata), decreasing = FALSE),sort(colnames(preplotdata), decreasing = FALSE)]
@@ -218,17 +218,20 @@ if (T){
   t <- pamtree$dendro
   makeplot(a,d,t,k)
 }
-pamtree$analytics
-table <- isotab(pamtree, level = 1)
-table <- table$tab
-as.numeric(as.character((table$`1`)))
-table$x1 <- as.numeric(gsub("[^0-9.-]", "", (table$`1`)))
-table$x2 <- as.numeric(gsub("[^0-9.-]", "", (table$`2`)))
-table$dif <- table$x1-table$x2
-coph <- cophenetic(t)
-d2 <- (coph/mean(coph)*2 + d/mean(d))/3
+
+pamtab <- isotab(pamtree, level = 3)
+pamtab <- pamtab$tab
+#as.numeric(as.character((table$`1`)))
+#table$x1 <- as.numeric(gsub("[^0-9.-]", "", (table$`1`)))
+#table$x2 <- as.numeric(gsub("[^0-9.-]", "", (table$`2`)))
+#table$dif <- table$x1-table$x2
+coph <- cophenetic(pamtree$dendro)
+dbray <- ((vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
+tbward <- agnes(dbray, method='ward')
+dbward <- cophenetic(tbward)
+d2 <- (coph/mean(coph)*2 + dbward/mean(dbward))/3
 t2 <- agnes(d2, method = 'average')
-makeplot('kulczynski-isopam-agnes-hybrid',d2,t2,k)
+makeplot('kisopam-bward-hybrid',d2,t2,k)
 
 
 
