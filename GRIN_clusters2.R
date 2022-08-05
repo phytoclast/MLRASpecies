@@ -10,6 +10,7 @@ library(rpart.plot)
 library(goeveg)
 library(proxy)
 library(goeveg)
+library(optpart)
 #import
 preplotdata <- read.delim("data/GRIN/altgeogrin.txt")
 rownames(preplotdata) <- preplotdata[,1]
@@ -101,6 +102,18 @@ if (T){
   t1 <- agnes(d, method='average')
   makeplot(a1,d,t1,k)
 }
+a <- 'bray-flex' 
+if (T){
+  a1 <- 'bray-flex'
+  k=14
+  d <- ((vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
+  t1 <- flexbeta(d, beta= -0.25)
+  makeplot(a1,d,t1,k)
+}
+
+
+
+
 if (T){
   a2 <- 'jaccard-agnes'
   k=14
