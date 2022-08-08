@@ -268,7 +268,7 @@ sil.kmeans <- 0
 sil.kulc <- 0
 sil.wardkulc <- 0
 
-for (k in 2:20){
+for (k in 2:20){#k=8
   sil.bray.1 <- (tbrayagnes %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
   sil.flex.1 <- (tbrayflex %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
   sil.flex1.1 <- (tbrayflex1 %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
