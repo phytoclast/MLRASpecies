@@ -12,7 +12,7 @@ library(proxy)
 library(goeveg)
 library(optpart)
 library(labdsv)
-library(clValid )
+library(indicspecies)
 #import
 preplotdata <- read.delim("data/GRIN/altgeogrin.txt")
 rownames(preplotdata) <- preplotdata[,1]
@@ -114,18 +114,18 @@ if (T){
 }
 a <- 'bray-flex3' 
 if (T){
-  a1 <- 'bray-flex3'
-  k=14
+  a1 <- 'bray-flex25'
+  k=8
   d <- ((vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
-  t1 <- flexbeta(d, beta= -0.3)
+  t1 <- flexbeta(d, beta= -0.25)
   makeplot(a1,d,t1,k)
 }
 a <- 'bray-flex1' 
 if (T){
-  a1 <- 'bray-flex1'
+  a1 <- 'bray-flex15'
   k=3
   d <- ((vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
-  t1 <- flexbeta(d, beta= -0.1)
+  t1 <- flexbeta(d, beta= -0.15)
   makeplot(a1,d,t1,k)
 }
 
@@ -255,7 +255,7 @@ tkulcagnes <- distkulc %>% agnes(method = 'average')
 tkulcward <- distkulc %>% agnes(method = 'ward')
 k <- 2
 klevel <- 0
-sil.bray <- 0
+sil.upgma <- 0
 sil.flex <- 0
 sil.flex1 <- 0
 sil.flex3 <- 0
@@ -269,13 +269,13 @@ sil.kulc <- 0
 sil.wardkulc <- 0
 
 for (k in 2:20){#k=8
-  sil.bray.1 <- (tbrayagnes %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
+  sil.upgma.1 <- (tbrayagnes %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
   sil.flex.1 <- (tbrayflex %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
   sil.flex1.1 <- (tbrayflex1 %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
   sil.flex3.1 <- (tbrayflex3 %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
   initialgrps <- tbrayward %>% cutree(k=k) 
   sil.opt.1 <- (optpart::optsil(initialgrps, distbray) %>% silhouette(distbray))[,3]%>% mean
-  sil.jac.1 <- (tbrayjac %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
+  sil.jac.1 <- (tjacagnes %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
   sil.sim.1 <- (tsimpagnes %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
   sil.ward.1 <- (tbrayward %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
   sil.diana.1 <- (tbraydiana %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
@@ -284,7 +284,7 @@ for (k in 2:20){#k=8
   sil.wardkulc.1 <- (tkulcward %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
   
   klevel <- c(klevel, k)
-  sil.bray <- c(sil.bray, sil.bray.1)
+  sil.upgma <- c(sil.upgma, sil.upgma.1)
   sil.flex <- c(sil.flex, sil.flex.1)
   sil.flex1 <- c(sil.flex1, sil.flex1.1)
   sil.flex3 <- c(sil.flex3, sil.flex3.1)
@@ -297,9 +297,8 @@ for (k in 2:20){#k=8
   sil.kulc <- c(sil.kulc, sil.kulc.1)
   sil.wardkulc <- c(sil.wardkulc, sil.wardkulc.1)
   }
-sil.table <- as.data.frame(cbind(klevel,sil.bray,sil.flex,sil.flex1,sil.flex3,sil.opt,sil.jac,sil.sim,sil.ward,sil.diana,sil.kmeans,sil.kulc,sil.wardkulc))
+sil.table <- as.data.frame(cbind(klevel,sil.upgma,sil.flex,sil.flex1,sil.flex3,sil.opt,sil.jac,sil.sim,sil.ward,sil.diana,sil.kmeans,sil.kulc,sil.wardkulc))
 sil.table <- sil.table[-1,]
-sil.table <- sil.table %>% mutate()
 lis.table <- sil.table[,-1] %>% t() %>% as.data.frame()
 lis.table <- lis.table %>% mutate(s1to8 = apply(lis.table[,1:8], MARGIN=1, FUN = 'mean'))
 lis.table <- lis.table %>% mutate(s9to16 = apply(lis.table[,9:16], MARGIN=1, FUN = 'mean'))
@@ -316,23 +315,30 @@ cor(cophenetic(tsimpagnes), distbray)
 cor(cophenetic(tkulcagnes), distbray)
 cor(cophenetic(tkulcward), distbray)
 
-cor(cophenetic(tbrayagnes), cophenetic(tkulcward))
-cor(cophenetic(tbrayflex), cophenetic(tkulcward))
-cor(cophenetic(tbrayflex1), cophenetic(tkulcward))
-cor(cophenetic(tbrayflex3), cophenetic(tkulcward))
-cor(cophenetic(tjacagnes), cophenetic(tkulcward))
-cor(cophenetic(tbraydiana), cophenetic(tkulcward))
-cor(cophenetic(tbrayward), cophenetic(tkulcward))
-cor(cophenetic(tsimpagnes), cophenetic(tkulcward))
-cor(cophenetic(tkulcagnes), cophenetic(tkulcward))
-cor(cophenetic(tkulcward), cophenetic(tkulcward))
+cor(cophenetic(tbrayagnes), cophenetic(tbrayward))
+cor(cophenetic(tbrayflex), cophenetic(tbrayward))
+cor(cophenetic(tbrayflex1), cophenetic(tbrayward))
+cor(cophenetic(tbrayflex3), cophenetic(tbrayward))
+cor(cophenetic(tjacagnes), cophenetic(tbrayward))
+cor(cophenetic(tbraydiana), cophenetic(tbrayward))
+cor(cophenetic(tbrayward), cophenetic(tbrayward))
+cor(cophenetic(tsimpagnes), cophenetic(tbrayward))
+cor(cophenetic(tkulcagnes), cophenetic(tbrayward))
+cor(cophenetic(tkulcward), cophenetic(tbrayward))
 
-
-
-
-
+#indval ----
+plotdata.total <- apply(plotdata, MARGIN = 2, FUN = 'sum')
+plotdata.total <- as.data.frame(cbind(name=names(plotdata.total),total=plotdata.total))
+removetaxon <- plotdata.total[plotdata.total$total %in% 0,]$name
+plotdata1 <- plotdata[,!colnames(plotdata) %in% removetaxon]
 initialgrps <- tbrayward %>% cutree(k=8) 
 
+mp <- multipatt(plotdata1, initialgrps)
+inds <- indicspecies::indicators(plotdata1, initialgrps)
+cv <- coverage(plotdata1, mp)
+
+oindval <- optpart::optimclass(plotdata1, initialgrps)
+oindval$sums
 
 #indval ----
 plotdata.total <- apply(plotdata, MARGIN = 2, FUN = 'sum')
@@ -346,7 +352,7 @@ totalinval <- mean(apply(look, MARGIN=1, FUN = 'mean'))
 
 k <- 2
 klevel <- 0
-ind.bray <- 0
+ind.upgma <- 0
 ind.flex <- 0
 ind.flex1 <- 0
 ind.flex3 <- 0
@@ -359,7 +365,7 @@ ind.kmeans <- 0
 ind.kulc <- 0
 ind.wardkulc <- 0
 for (k in 2:20){
-  ind.bray.1 <- tbrayagnes %>% cutree(k=k) 
+  ind.upgma.1 <- tbrayagnes %>% cutree(k=k) 
   ind.flex.1 <- tbrayflex %>% cutree(k=k)
   ind.flex1.1 <- tbrayflex1 %>% cutree(k=k) 
   ind.flex3.1 <- tbrayflex3 %>% cutree(k=k) 
@@ -374,7 +380,7 @@ for (k in 2:20){
   ind.wardkulc.1 <- tkulcward %>% cutree(k=k) 
   ind.wardbraykulc.1 <- tkulcbrayward %>% cutree(k=k) 
   
-  ind.bray.1 <- indval(plotdata1, ind.bray.1) %>% .$indval %>% apply(MARGIN=1, FUN = 'mean') %>% mean()
+  ind.upgma.1 <- indval(plotdata1, ind.upgma.1) %>% .$indval %>% apply(MARGIN=1, FUN = 'mean') %>% mean()
   ind.flex.1 <- indval(plotdata1, ind.flex.1) %>% .$indval %>% apply(MARGIN=1, FUN = 'mean') %>% mean()
   ind.flex1.1 <- indval(plotdata1, ind.flex1.1) %>% .$indval %>% apply(MARGIN=1, FUN = 'mean') %>% mean()
   ind.flex3.1 <- indval(plotdata1, ind.flex3.1) %>% .$indval %>% apply(MARGIN=1, FUN = 'mean') %>% mean()
@@ -388,7 +394,7 @@ for (k in 2:20){
   ind.wardkulc.1 <- indval(plotdata1, ind.wardkulc.1) %>% .$indval %>% apply(MARGIN=1, FUN = 'mean') %>% mean()
   
   klevel <- c(klevel, k)
-  ind.bray <- c(ind.bray, ind.bray.1)
+  ind.upgma <- c(ind.upgma, ind.upgma.1)
   ind.flex <- c(ind.flex, ind.flex.1)
   ind.flex1 <- c(ind.flex1, ind.flex1.1)
   ind.flex3 <- c(ind.flex3, ind.flex3.1)
@@ -401,7 +407,7 @@ for (k in 2:20){
   ind.kulc <- c(ind.kulc, ind.kulc.1)
   ind.wardkulc <- c(ind.wardkulc, ind.wardkulc.1)
 }
-ind.table <- as.data.frame(cbind(klevel,ind.bray,ind.flex,ind.flex1,ind.flex3,ind.opt,ind.jac,ind.sim,ind.ward,ind.diana,ind.kmeans,ind.kulc,ind.wardkulc))
+ind.table <- as.data.frame(cbind(klevel,ind.upgma,ind.flex,ind.flex1,ind.flex3,ind.opt,ind.jac,ind.sim,ind.ward,ind.diana,ind.kmeans,ind.kulc,ind.wardkulc))
 ind.table <- ind.table[-1,]
 ind.table <- ind.table %>% mutate()
 dni.table <- ind.table[,-1] %>% t() %>% as.data.frame()
@@ -427,7 +433,7 @@ plotdata1 <- plotdata[,!colnames(plotdata) %in% removetaxon]
 
 k <- 2
 klevel <- 0
-ind.bray <- 0
+ind.upgma <- 0
 ind.flex <- 0
 ind.flex1 <- 0
 ind.flex3 <- 0
@@ -441,7 +447,7 @@ ind.kulc <- 0
 ind.wardkulc <- 0
 for (k in 2:20){
     
-  ind.bray.0 <- tbrayagnes %>% cutree(k=k) 
+  ind.upgma.0 <- tbrayagnes %>% cutree(k=k) 
   ind.flex.0 <- tbrayflex %>% cutree(k=k)
   ind.flex1.0 <- tbrayflex1 %>% cutree(k=k) 
   ind.flex3.0 <- tbrayflex3 %>% cutree(k=k) 
@@ -455,7 +461,7 @@ for (k in 2:20){
   ind.kulc.0 <- tkulcagnes %>% cutree(k=k)
   ind.wardkulc.0 <- tkulcward %>% cutree(k=k) 
   
-  ind.bray.1 <- aggregate(plotdata1, by=list(ind.bray.0), FUN='mean') %>% .[,-1] %>% apply(MARGIN = 2, FUN = 'sd') %>% mean()
+  ind.upgma.1 <- aggregate(plotdata1, by=list(ind.upgma.0), FUN='mean') %>% .[,-1] %>% apply(MARGIN = 2, FUN = 'sd') %>% mean()
   ind.flex.1 <- aggregate(plotdata1, by=list(ind.flex.0), FUN='mean') %>% .[,-1] %>% apply(MARGIN = 2, FUN = 'sd') %>% mean()
   ind.flex1.1 <- aggregate(plotdata1, by=list(ind.flex1.0), FUN='mean') %>% .[,-1] %>% apply(MARGIN = 2, FUN = 'sd') %>% mean()
   ind.flex3.1 <- aggregate(plotdata1, by=list(ind.flex3.0), FUN='mean') %>% .[,-1] %>% apply(MARGIN = 2, FUN = 'sd') %>% mean()
@@ -469,7 +475,7 @@ for (k in 2:20){
   ind.wardkulc.1 <- aggregate(plotdata1, by=list(ind.wardkulc.0), FUN='mean') %>% .[,-1] %>% apply(MARGIN = 2, FUN = 'sd') %>% mean()
   
   klevel <- c(klevel, k)
-  ind.bray <- c(ind.bray, ind.bray.1)
+  ind.upgma <- c(ind.upgma, ind.upgma.1)
   ind.flex <- c(ind.flex, ind.flex.1)
   ind.flex1 <- c(ind.flex1, ind.flex1.1)
   ind.flex3 <- c(ind.flex3, ind.flex3.1)
@@ -482,7 +488,7 @@ for (k in 2:20){
   ind.kulc <- c(ind.kulc, ind.kulc.1)
   ind.wardkulc <- c(ind.wardkulc, ind.wardkulc.1)
 }
-ind.table2 <- as.data.frame(cbind(klevel,ind.bray,ind.flex,ind.flex1,ind.flex3,ind.opt,ind.jac,ind.sim,ind.ward,ind.diana,ind.kmeans,ind.kulc,ind.wardkulc))
+ind.table2 <- as.data.frame(cbind(klevel,ind.upgma,ind.flex,ind.flex1,ind.flex3,ind.opt,ind.jac,ind.sim,ind.ward,ind.diana,ind.kmeans,ind.kulc,ind.wardkulc))
 ind.table2 <- ind.table2[-1,]
 ind.table2 <- ind.table2 %>% mutate()
 dni.table2 <- ind.table2[,-1] %>% t() %>% as.data.frame()
@@ -490,46 +496,20 @@ dni.table2 <- dni.table2 %>% mutate(s1to8 = apply(dni.table2[,1:8], MARGIN=1, FU
 dni.table2 <- dni.table2 %>% mutate(s9to16 = apply(dni.table2[,9:16], MARGIN=1, FUN = 'mean'))
 
 
-thistride <- stride(2, as.hclust(tbrayagnes))
-opt.agnes.2 <- optimclass(plotdata1, stride(2, as.hclust(tbrayagnes)))
-opt.ward.2 <- optimclass(plotdata1, stride(2, as.hclust(tbrayward)))
-opt.flex1.2 <- optimclass(plotdata1, stride(2, as.hclust(tbrayflex1)))
-opt.flex.2 <- optimclass(plotdata1, stride(2, as.hclust(tbrayflex)))
-opt.diana.2 <- optimclass(plotdata1, stride(2, as.hclust(tbraydiana)))
-opt.agnes.3 <- optimclass(plotdata1, stride(3, as.hclust(tbrayagnes)))
-opt.ward.3 <- optimclass(plotdata1, stride(3, as.hclust(tbrayward)))
-opt.flex1.3 <- optimclass(plotdata1, stride(3, as.hclust(tbrayflex1)))
-opt.flex.3 <- optimclass(plotdata1, stride(3, as.hclust(tbrayflex)))
-opt.diana.3 <- optimclass(plotdata1, stride(3, as.hclust(tbraydiana)))
-opt.agnes.8 <- optimclass(plotdata1, stride(8, as.hclust(tbrayagnes)))
-opt.ward.8 <- optimclass(plotdata1, stride(8, as.hclust(tbrayward)))
-opt.flex1.8 <- optimclass(plotdata1, stride(8, as.hclust(tbrayflex1)))
-opt.flex.8 <- optimclass(plotdata1, stride(8, as.hclust(tbrayflex)))
-opt.diana.8 <- optimclass(plotdata1, stride(8, as.hclust(tbraydiana)))
-
-opt.agnes.2$sig.spc
-opt.ward.2$sig.spc
-opt.flex1.2$sig.spc
-opt.flex.2$sig.spc
-opt.diana.2$sig.spc
-opt.agnes.3$sig.spc
-opt.ward.3$sig.spc
-opt.flex1.3$sig.spc
-opt.flex.3$sig.spc
-opt.diana.3$sig.spc
-opt.agnes.8$sig.spc
-opt.ward.8$sig.spc
-opt.flex1.8$sig.spc
-opt.flex.8$sig.spc
-opt.diana.8$sig.spc
 
 
 
+plotdata.total <- apply(plotdata2, MARGIN = 2, FUN = 'sum')
+plotdata.total <- as.data.frame(cbind(name=names(plotdata.total),total=plotdata.total))
+removetaxon <- plotdata.total[plotdata.total$total %in% 0,]$name
+plotdata1 <- plotdata[,!colnames(plotdata) %in% removetaxon]
 
-distbray <- vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)
-distjac <- vegdist(plotdata, method='jaccard', binary=FALSE, na.rm=T)
-distsim <- as.dist(simil(plotdata,method='Simpson'))
-distkulc <- vegdist(plotdata, method='kulczynski', binary=FALSE, na.rm=T)
+
+
+distbray <- vegdist(plotdata1, method='bray', binary=FALSE, na.rm=T)
+distjac <- vegdist(plotdata1, method='jaccard', binary=FALSE, na.rm=T)
+distsim <- as.dist(simil(plotdata1,method='Simpson'))
+distkulc <- vegdist(plotdata1, method='kulczynski', binary=FALSE, na.rm=T)
 tbrayagnes <- distbray %>% agnes(method = 'average')
 tbrayflex05 <- distbray %>% flexbeta(beta= -0.05)
 tbrayflex10 <- distbray %>% flexbeta(beta= -0.10)
@@ -541,7 +521,7 @@ tbrayflex35 <- distbray %>% flexbeta(beta= -0.35)
 tbrayward <- distbray %>% agnes(method = 'ward')
 k <- 2
 klevel <- 0
-sil.bray <- 0
+sil.upgma <- 0
 sil.flex05 <- 0
 sil.flex10 <- 0
 sil.flex15 <- 0
@@ -552,7 +532,7 @@ sil.flex35 <- 0
 sil.ward <- 0
 
 for (k in 2:20){
-  sil.bray.1 <- (tbrayagnes %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
+  sil.upgma.1 <- (tbrayagnes %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
   sil.flex05.1 <- (tbrayflex05 %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
   sil.flex10.1 <- (tbrayflex10 %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
   sil.flex15.1 <- (tbrayflex15 %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
@@ -560,10 +540,10 @@ for (k in 2:20){
   sil.flex25.1 <- (tbrayflex25 %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
   sil.flex30.1 <- (tbrayflex30 %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
   sil.flex35.1 <- (tbrayflex35 %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
-    sil.ward.1 <- (tbrayward %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
+  sil.ward.1 <- (tbrayward %>% cutree(k=k) %>% silhouette(distbray))[,3]%>% mean
   
   klevel <- c(klevel, k)
-  sil.bray <- c(sil.bray, sil.bray.1)
+  sil.upgma <- c(sil.upgma, sil.upgma.1)
   sil.flex05 <- c(sil.flex05, sil.flex05.1)
   sil.flex10 <- c(sil.flex10, sil.flex10.1)
   sil.flex15 <- c(sil.flex15, sil.flex15.1)
@@ -571,11 +551,153 @@ for (k in 2:20){
   sil.flex25 <- c(sil.flex25, sil.flex25.1)
   sil.flex30 <- c(sil.flex30, sil.flex30.1)
   sil.flex35 <- c(sil.flex35, sil.flex35.1)
-    sil.ward <- c(sil.ward, sil.ward.1)
-  }
-sil.table <- as.data.frame(cbind(klevel,sil.bray,sil.flex05,sil.flex10,sil.flex15,sil.flex20,sil.flex25,sil.flex30,sil.flex35,sil.ward))
+  sil.ward <- c(sil.ward, sil.ward.1)
+}
+sil.table <- as.data.frame(cbind(klevel,sil.upgma,sil.flex05,sil.flex10,sil.flex15,sil.flex20,sil.flex25,sil.flex30,sil.flex35,sil.ward))
 sil.table <- sil.table[-1,]
 sil.table <- sil.table %>% mutate()
 lis.table <- sil.table[,-1] %>% t() %>% as.data.frame()
-lis.table <- lis.table %>% mutate(s1to8 = apply(lis.table[,1:8], MARGIN=1, FUN = 'mean'))
-lis.table <- lis.table %>% mutate(s9to16 = apply(lis.table[,9:16], MARGIN=1, FUN = 'mean'))
+lis.table <- lis.table %>% mutate(s2to8 = apply(lis.table[,2:7], MARGIN=1, FUN = 'mean'))
+lis.table <- lis.table %>% mutate(s9to16 = apply(lis.table[,8:16], MARGIN=1, FUN = 'mean'))
+
+#----
+plotdata.total <- apply(plotdata2, MARGIN = 2, FUN = 'sum')
+plotdata.total <- as.data.frame(cbind(name=names(plotdata.total),total=plotdata.total))
+removetaxon <- plotdata.total[plotdata.total$total %in% 0,]$name
+plotdata1 <- plotdata[,!colnames(plotdata) %in% removetaxon]
+
+distbray <- vegdist(plotdata1, method='bray', binary=FALSE, na.rm=T)# dbray <- as.data.frame(as.matrix(distbray))
+distjac <- vegdist(plotdata1, method='jaccard', binary=FALSE, na.rm=T)
+distsim <- as.dist(simil(plotdata1,method='Simpson'))
+distkulc <- vegdist(plotdata1, method='kulczynski', binary=FALSE, na.rm=T)
+tbrayagnes <- distbray %>% agnes(method = 'average')
+tbrayflex05 <- distbray %>% flexbeta(beta= -0.05)
+tbrayflex10 <- distbray %>% flexbeta(beta= -0.10)
+tbrayflex15 <- distbray %>% flexbeta(beta= -0.15)
+tbrayflex20 <- distbray %>% flexbeta(beta= -0.20)
+tbrayflex25 <- distbray %>% flexbeta(beta= -0.25)
+tbrayflex30 <- distbray %>% flexbeta(beta= -0.30)
+tbrayflex35 <- distbray %>% flexbeta(beta= -0.35)
+tbrayward <- distbray %>% agnes(method = 'ward')
+k <- 2
+klevel <- 0
+ind.upgma <- 0
+ind.flex05 <- 0
+ind.flex10 <- 0
+ind.flex15 <- 0
+ind.flex20 <- 0
+ind.flex25 <- 0
+ind.flex30 <- 0
+ind.flex35 <- 0
+ind.ward <- 0
+
+clu.upgma <- 0
+clu.flex05 <- 0
+clu.flex10 <- 0
+clu.flex15 <- 0
+clu.flex20 <- 0
+clu.flex25 <- 0
+clu.flex30 <- 0
+clu.flex35 <- 0
+clu.ward <- 0
+
+timeA = Sys.time()
+ind.upgma.1 <- optimclass(plotdata1, stride(8, as.hclust(tbrayagnes)))$sig.spc
+Sys.time() - timeA
+timeA = Sys.time()
+# ind.upgma.1 <- tbrayagnes %>% cutree(k=8) 
+# ind.upgma.1 <- indval(plotdata1, ind.upgma.1) %>% .$indval %>% apply(MARGIN=1, FUN = 'mean') %>% mean()
+# Sys.time() - timeA  
+timeA = Sys.time()
+for (k in 2:10){
+
+  # ind.upgma.1 <- tbrayagnes %>% cutree(k=k) 
+  # ind.flex05.1 <- tbrayflex05 %>% cutree(k=k)
+  # ind.flex10.1 <- tbrayflex10 %>% cutree(k=k)
+  # ind.flex15.1 <- tbrayflex15 %>% cutree(k=k)
+  # ind.flex20.1 <- tbrayflex20 %>% cutree(k=k)
+  # ind.flex25.1 <- tbrayflex25 %>% cutree(k=k)
+  # ind.flex30.1 <- tbrayflex30 %>% cutree(k=k)
+  # ind.flex35.1 <- tbrayflex35 %>% cutree(k=k)
+  # ind.ward.1 <- tbrayward %>% cutree(k=k)
+  # 
+  # ind.upgma.1 <- indval(plotdata1, ind.upgma.1) %>% .$indval %>% apply(MARGIN=1, FUN = 'mean') %>% mean()
+  # ind.flex05.1 <- indval(plotdata1, ind.flex05.1) %>% .$indval %>% apply(MARGIN=1, FUN = 'mean') %>% mean()
+  # ind.flex10.1 <- indval(plotdata1, ind.flex10.1) %>% .$indval %>% apply(MARGIN=1, FUN = 'mean') %>% mean()
+  # ind.flex15.1 <- indval(plotdata1, ind.flex15.1) %>% .$indval %>% apply(MARGIN=1, FUN = 'mean') %>% mean()
+  # ind.flex20.1 <- indval(plotdata1, ind.flex20.1) %>% .$indval %>% apply(MARGIN=1, FUN = 'mean') %>% mean()
+  # ind.flex25.1 <- indval(plotdata1, ind.flex25.1) %>% .$indval %>% apply(MARGIN=1, FUN = 'mean') %>% mean()
+  # ind.flex30.1 <- indval(plotdata1, ind.flex30.1) %>% .$indval %>% apply(MARGIN=1, FUN = 'mean') %>% mean()
+  # ind.flex35.1 <- indval(plotdata1, ind.flex35.1) %>% .$indval %>% apply(MARGIN=1, FUN = 'mean') %>% mean()
+  # ind.ward.1 <- indval(plotdata1, ind.ward.1) %>% .$indval %>% apply(MARGIN=1, FUN = 'mean') %>% mean()
+  
+  ind.upgma.0 <- optimclass(plotdata1, stride(k, as.hclust(tbrayagnes)))
+  ind.flex05.0 <- optimclass(plotdata1, stride(k, as.hclust(tbrayflex05)))
+  ind.flex10.0 <- optimclass(plotdata1, stride(k, as.hclust(tbrayflex10)))
+  ind.flex15.0 <- optimclass(plotdata1, stride(k, as.hclust(tbrayflex15)))
+  ind.flex20.0 <- optimclass(plotdata1, stride(k, as.hclust(tbrayflex20)))
+  ind.flex25.0 <- optimclass(plotdata1, stride(k, as.hclust(tbrayflex25)))
+  ind.flex30.0 <- optimclass(plotdata1, stride(k, as.hclust(tbrayflex30)))
+  ind.flex35.0 <- optimclass(plotdata1, stride(k, as.hclust(tbrayflex35)))
+  ind.ward.0 <- optimclass(plotdata1, stride(k, as.hclust(tbrayward)))
+  
+  ind.upgma.1 <- ind.upgma.0$sig.spc
+  ind.flex05.1 <- ind.flex05.0$sig.spc
+  ind.flex10.1 <- ind.flex10.0$sig.spc
+  ind.flex15.1 <- ind.flex15.0$sig.spc
+  ind.flex20.1 <- ind.flex20.0$sig.spc
+  ind.flex25.1 <- ind.flex25.0$sig.spc
+  ind.flex30.1 <- ind.flex30.0$sig.spc
+  ind.flex35.1 <- ind.flex35.0$sig.spc
+  ind.ward.1 <- ind.ward.0$sig.spc
+  
+  clu.upgma.1 <- ind.upgma.0$sig.clust
+  clu.flex05.1 <- ind.flex05.0$sig.clust
+  clu.flex10.1 <- ind.flex10.0$sig.clust
+  clu.flex15.1 <- ind.flex15.0$sig.clust
+  clu.flex20.1 <- ind.flex20.0$sig.clust
+  clu.flex25.1 <- ind.flex25.0$sig.clust
+  clu.flex30.1 <- ind.flex30.0$sig.clust
+  clu.flex35.1 <- ind.flex35.0$sig.clust
+  clu.ward.1 <- ind.ward.0$sig.clust
+  
+  klevel <- c(klevel, k)
+  ind.upgma <- c(ind.upgma, ind.upgma.1)
+  ind.flex05 <- c(ind.flex05, ind.flex05.1)
+  ind.flex10 <- c(ind.flex10, ind.flex10.1)
+  ind.flex15 <- c(ind.flex15, ind.flex15.1)
+  ind.flex20 <- c(ind.flex20, ind.flex20.1)
+  ind.flex25 <- c(ind.flex25, ind.flex25.1)
+  ind.flex30 <- c(ind.flex30, ind.flex30.1)
+  ind.flex35 <- c(ind.flex35, ind.flex35.1)
+  ind.ward <- c(ind.ward, ind.ward.1)
+  
+  clu.upgma <- c(clu.upgma, clu.upgma.1)
+  clu.flex05 <- c(clu.flex05, clu.flex05.1)
+  clu.flex10 <- c(clu.flex10, clu.flex10.1)
+  clu.flex15 <- c(clu.flex15, clu.flex15.1)
+  clu.flex20 <- c(clu.flex20, clu.flex20.1)
+  clu.flex25 <- c(clu.flex25, clu.flex25.1)
+  clu.flex30 <- c(clu.flex30, clu.flex30.1)
+  clu.flex35 <- c(clu.flex35, clu.flex35.1)
+  clu.ward <- c(clu.ward, clu.ward.1)
+}
+Sys.time() - timeA  
+ind.table <- as.data.frame(cbind(klevel,ind.upgma,ind.flex05,ind.flex10,ind.flex15,ind.flex20,ind.flex25,ind.flex30,ind.flex35,ind.ward))
+ind.table <- ind.table[-1,]
+ind.table <- ind.table %>% mutate()
+dni.table <- ind.table[,-1] %>% t() %>% as.data.frame()
+dni.table <- dni.table %>% mutate(s2to8 = apply(dni.table[,1:7], MARGIN=1, FUN = 'mean'))
+clu.table <- as.data.frame(cbind(klevel,clu.upgma,clu.flex05,clu.flex10,clu.flex15,clu.flex20,clu.flex25,clu.flex30,clu.flex35,clu.ward))
+clu.table <- clu.table[-1,]
+clu.table <- clu.table %>% mutate()
+ulc.table <- clu.table[,-1] %>% t() %>% as.data.frame()
+ulc.table <- ulc.table %>% mutate(s2to8 = apply(dni.table[,1:7], MARGIN=1, FUN = 'mean'))
+write.csv(dni.table, 'output/optimclassindicators.csv', row.names = F)
+write.csv(ulc.table, 'output/optimclasscluster.csv', row.names = F)
+# dni.table2 <- dni.table
+# write.csv(dni.table2, 'output/indval.csv', row.names = F)
+
+
+ind <- indval(plotdata1, tbrayflex20 %>% cutree(k=4))
+indicatorspecies <- as.data.frame(ind$relabu)
