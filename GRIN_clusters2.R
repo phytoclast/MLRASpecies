@@ -561,7 +561,7 @@ lis.table <- lis.table %>% mutate(s2to8 = apply(lis.table[,2:7], MARGIN=1, FUN =
 lis.table <- lis.table %>% mutate(s9to16 = apply(lis.table[,8:16], MARGIN=1, FUN = 'mean'))
 
 #----
-plotdata.total <- apply(plotdata2, MARGIN = 2, FUN = 'sum')
+plotdata.total <- apply(plotdata, MARGIN = 2, FUN = 'sum')
 plotdata.total <- as.data.frame(cbind(name=names(plotdata.total),total=plotdata.total))
 removetaxon <- plotdata.total[plotdata.total$total %in% 0,]$name
 plotdata1 <- plotdata[,!colnames(plotdata) %in% removetaxon]
@@ -701,3 +701,90 @@ write.csv(ulc.table, 'output/optimclasscluster.csv', row.names = F)
 
 ind <- indval(plotdata1, tbrayflex20 %>% cutree(k=4))
 indicatorspecies <- as.data.frame(ind$relabu)
+
+#dynamic
+a='dynamic'
+dynclust <-
+dynamicTreeCut::cutreeDynamicTree(tbrayflex15, minModuleSize = 1)
+filename <- paste0('output/GRIN_',a,'.png')
+t <- as.hclust(t)
+#make cuts and reformat dendrogram
+ngroups=k
+groups <- cutree(t, k = ngroups)
+
+
+t <- as.hclust(tbrayflex15)
+#make cuts and reformat dendrogram
+soilplot <- t$labels
+clust <- unname(dynclust)
+groupdf <- as.data.frame(cbind(soilplot, clust))
+groupdf$clust <- (as.numeric(as.character(groupdf$clust)))
+maxcluster <- max(groupdf$clust)
+numberzeros <- nrow(groupdf[(groupdf$clust == 0),])
+whichrecords <- which(groupdf$clust == 0)
+if (nrow(groupdf[groupdf$clust == 0,]) != 0){
+  for (i in 1:numberzeros){ #assign all zero clusters to unique cluster number.
+    groupdf[whichrecords[i],]$clust <- maxcluster+i}}
+
+newlabels <- t$labels
+newlabels <- as.data.frame(newlabels)
+newlabels$row <- row(newlabels)
+newlabels <- merge(newlabels, groupdf, by.x='newlabels', by.y ='soilplot')
+newlabels$newlabels <- paste(newlabels$clust, newlabels$newlabels)
+newlabels <- newlabels[order(newlabels$row),1]
+newtree <- t
+newtree$labels <- newlabels
+
+dend1 <- color_branches(as.hclust(newtree), k = ngroups)
+dend1 <- color_labels(dend1, k = ngroups)
+
+#output file
+
+w <- 800
+h <- nrow(plotdata)*12+80
+u <- 12
+png(filename=filename,width = w, height = h, units = "px", pointsize = u)
+
+par(mar = c(2,0,1,13))
+plot(dend1, horiz = TRUE, main=paste('floristic simularity', a,'method of', 'GRIN genera'), font=1, cex=0.84)
+#rect.dendrogram(dend1, k = ngroups, horiz = TRUE)
+dev.off()
+
+k=10
+sil.upgma.1 <- (tbrayagnes %>% cutree(k=k) %>% silhouette(distbray)) 
+sil.flex05.1 <- (tbrayflex05 %>% cutree(k=k) %>% silhouette(distbray)) 
+sil.flex10.1 <- (tbrayflex10 %>% cutree(k=k) %>% silhouette(distbray))
+sil.flex15.1 <- (tbrayflex15 %>% cutree(k=k) %>% silhouette(distbray))
+sil.flex20.1 <- (tbrayflex20 %>% cutree(k=k) %>% silhouette(distbray))
+sil.flex25.1 <- (tbrayflex25 %>% cutree(k=k) %>% silhouette(distbray))
+sil.flex30.1 <- (tbrayflex30 %>% cutree(k=k) %>% silhouette(distbray))
+sil.flex35.1 <- (tbrayflex35 %>% cutree(k=k) %>% silhouette(distbray))
+sil.ward.1 <- (tbrayward %>% cutree(k=k) %>% silhouette(distbray))
+
+d <- ((vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
+t <- flexbeta(d, beta= -0.15)
+k = 2
+for(k in 2:10){#k=2
+labels = t$labels
+sil <- (t %>% cutree(k=k) %>% silhouette(distbray)) 
+sil <- as.data.frame(cbind(labels = labels, cluster=sil[,1], sil0=sil[,3]))
+sil$sil0 <- as.numeric(sil$sil0)
+sil <- sil %>% group_by(cluster) %>% mutate(sil.mean = mean(sil0))
+sil0 <- sil[,c('cluster','sil.mean')]
+colnames(sil0) <- c(paste0('cluster.',k),paste0('sil.',k))
+if(k==2){sil.table = cbind(labels = names(d), sil0)}else{sil.table = cbind(sil.table,sil0)}
+}
+sil.table <- sil.table[c(1,
+                         unique(floor(2:ncol(sil.table)/2)*2)
+,
+unique(floor(2:ncol(sil.table)/2)*2)+1
+)]
+
+if (T){
+  a1 <- 'flex15'
+  k=10
+  d <- ((vegdist(plotdata, method='bray', binary=FALSE, na.rm=T)))
+  t1 <- flexbeta(d, beta= 0)
+  makeplot(a1,d,t1,k)
+}
+
